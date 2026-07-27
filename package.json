@@ -1,0 +1,46 @@
+{
+  "name": "thematic-site",
+  "version": "1.0.0",
+  "description": "thematic.bond — public suit roster, FAQ, and Markdown mod-description feed for the Thematic Minecraft mod",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "export": "tsx scripts/export.ts",
+    "predev": "npm run export",
+    "dev": "vite dev",
+    "prebuild": "npm run export",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/awitkowski0/ThematicSite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/awitkowski0/ThematicSite/issues"
+  },
+  "homepage": "https://github.com/awitkowski0/ThematicSite#readme",
+  "dependencies": {
+    "@tanstack/react-router": "^1.121.0",
+    "@tanstack/react-start": "^1.121.0",
+    "nitro": "^3.0.260610-beta",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vite": "^7.0.0"
+  }
+}

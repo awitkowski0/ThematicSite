@@ -1,0 +1,55 @@
+name: Build and deploy
+
+# Pulls the Thematic mod's own data (via a read-only deploy key — this repo is public,
+# Thematic is private) to regenerate the suit/collection manifest, builds the site, and
+# deploys straight to Vercel via CLI. Vercel itself never checks out Thematic — it only
+# ever receives this already-built output.
+
+on:
+  repository_dispatch:
+    types: [rebuild]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout ThematicSite
+        uses: actions/checkout@v4
+
+      - name: Checkout Thematic (read-only, data source)
+        uses: actions/checkout@v4
+        with:
+          repository: awitkowski0/Thematic
+          ssh-key: ${{ secrets.THEMATIC_SOURCE_DEPLOY_KEY }}
+          path: thematic-source
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build (regenerates suit data from Thematic, then builds the site)
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          THEMATIC_SOURCE_DIR: ./thematic-source
+
+      - name: Deploy prebuilt output to Vercel
+        run: vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
