@@ -7,7 +7,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "export": "tsx scripts/export.ts",
+    "fetch-source": "node scripts/fetch-source.mjs",
+    "export": "npm run fetch-source && tsx scripts/export.ts",
     "predev": "npm run export",
     "dev": "vite dev",
     "prebuild": "npm run export",

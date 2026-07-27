@@ -10,6 +10,10 @@ src/routeTree.gen.ts
 src/data/*.generated.json
 public/suits/
 
+# build-time clone of the private Thematic repo (see scripts/fetch-source.mjs). Only
+# exists on Vercel, or locally if you point THEMATIC_SOURCE_DIR here.
+/thematic-source/
+
 # Local-only vanilla icon source (scripts/lib.ts VANILLA_ICONS_*_DIR) — unclear license/
 # provenance (looks like a third-party Bedrock PBR pack, not plain extracted vanilla
 # assets), so it stays off the public repo. Icons it produces still get copied into

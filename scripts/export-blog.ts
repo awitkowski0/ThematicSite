@@ -1,4 +1,4 @@
-// Generates blog.generated.json from git history of ThematicThird's changelog.txt — one
+// Generates blog.generated.json from git history of Thematic's changelog.txt — one
 // post per version. The file gets overwritten each release rather than appended to, so a
 // full-file snapshot at each commit that touched it naturally recovers each historical
 // version's notes as they looked at the time. Not run alongside the other export-*.ts
@@ -28,7 +28,16 @@ interface CommitRef {
 }
 
 function listCommits(): CommitRef[] {
-  const out = git(['log', '--follow', '--format=%H|%cI', '--', CHANGELOG_PATH]).trim()
+  let out: string
+  try {
+    out = git(['log', '--follow', '--format=%H|%cI', '--', CHANGELOG_PATH]).trim()
+  } catch {
+    // No git history available — e.g. the source was provided as a plain directory/tarball,
+    // or a --depth 1 shallow clone. The changelog is a nice-to-have, not worth failing a
+    // whole deploy over, so degrade to "no posts" and say so.
+    console.warn('[export-blog] no usable git history for changelog.txt — writing an empty blog')
+    return []
+  }
   if (!out) return []
   return out.split('\n').map((line) => {
     const [hash, date] = line.split('|')

@@ -15,19 +15,29 @@ To point the export script at a Thematic checkout somewhere else, set `THEMATIC_
 
 ## How deploys work
 
-Thematic is private; this repo is public so it can deploy on Vercel's free tier. Vercel's own git integration is **not** used — it never gets access to Thematic. Instead, `.github/workflows/deploy.yml`:
+Thematic is private; this repo is public so it can deploy on Vercel's free tier. Deploys run
+on **Vercel's own git integration** — a push here builds normally. The catch is that Vercel
+only clones *this* repo, so the build fetches the mod source itself:
 
-1. Triggers on a `repository_dispatch` sent by Thematic's `notify-site-rebuild.yml` workflow whenever its `main` changes (or via manual `workflow_dispatch`).
-2. Checks out this repo, then checks out Thematic read-only via a deploy key.
-3. Runs `vercel build` (which runs `scripts/export-suits.ts` against that checkout, then the framework build) and `vercel deploy --prebuilt`.
+1. `npm run build` → `prebuild` → `npm run export` → `scripts/fetch-source.mjs` first.
+2. `fetch-source.mjs` no-ops locally (the source is already at `..`). On Vercel it does a
+   blobless sparse clone of Thematic using `THEMATIC_REPO_TOKEN`, pulling only the ~57 MB the
+   export scripts read rather than the full ~470 MB history.
+3. The export scripts then run against it exactly as they do locally, and the site builds.
 
-### Required repo secrets
+Pushes to **Thematic** don't touch this repo, so its `notify-site-rebuild.yml` workflow pings a
+Vercel **deploy hook** to trigger a rebuild whenever mod data changes.
 
-- `THEMATIC_SOURCE_DEPLOY_KEY` — private half of a read-only SSH deploy key added to Thematic (Settings → Deploy keys).
-- `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` — from `vercel link` against this project.
+### Required Vercel environment variables
 
-And in Thematic itself: `SITE_DISPATCH_TOKEN` — a fine-grained PAT scoped to **this** repo
-(ThematicSite, the dispatch target — not Thematic) with **Contents: Read and write**, which is
-what GitHub requires for `repository_dispatch`. Anything less returns a 403. Note that
-`notify-site-rebuild.yml` declares `environment: Dev`, so the secret must exist in that
-environment (or at the repo level) to resolve.
+- `THEMATIC_REPO_TOKEN` — fine-grained PAT scoped to the **Thematic** repo with
+  **Contents: Read**. Build-time only; it isn't `VITE_`-prefixed, so it's never exposed to the
+  browser. Set it for Production (and Preview, if you want previews to build).
+- `THEMATIC_SOURCE_DIR` — set to `./thematic-source` so the clone lands inside the build
+  workspace instead of trying to write to the parent directory.
+
+### Required secret in Thematic
+
+- `VERCEL_DEPLOY_HOOK_URL` — from Vercel → Settings → Git → Deploy Hooks. The URL *is* the
+  credential, so keep it a secret. `notify-site-rebuild.yml` declares `environment: Dev`, so it
+  must exist in that environment (or at the repo level) to resolve.

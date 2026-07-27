@@ -43,8 +43,8 @@ export function requireSourceExists(): void {
   if (!fs.existsSync(RESOURCES)) {
     throw new Error(
       `Can't find the Thematic mod source at ${RESOURCES}. ` +
-        `Set THEMATIC_SOURCE_DIR to point at a ThematicThird checkout (defaults to "..", ` +
-        `i.e. this script expects to run from a "site" directory nested inside ThematicThird).`,
+        `Set THEMATIC_SOURCE_DIR to point at a Thematic checkout (defaults to "..", ` +
+        `i.e. this script expects to run from a "site" directory nested inside Thematic).`,
     )
   }
 }
