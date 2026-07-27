@@ -4,8 +4,10 @@ import { exportSuits } from './export-suits'
 import { exportBook } from './export-book'
 import { exportOres } from './export-ores'
 import { exportBlog } from './export-blog'
+import { exportAbilities } from './export-abilities'
 
 exportSuits()
 exportBook()
 exportOres()
 exportBlog()
+await exportAbilities() // network-bound (Google Sheets), so last and awaited

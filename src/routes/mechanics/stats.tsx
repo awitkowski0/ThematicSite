@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { entriesFor } from '../../lib/book'
 import { MarkdownContent } from '../../components/MarkdownContent'
 import { DamageCalculator } from '../../components/DamageCalculator'
+import { MatchupSimulator } from '../../components/MatchupSimulator'
 
 export const Route = createFileRoute('/mechanics/stats')({
   head: () => ({
@@ -24,9 +25,13 @@ function StatsPage() {
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Calculator</h2>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-          Work out what an attack actually does against a given Defense, or how much Utility cuts a cooldown. Uses the same formulas as the mod.
+          Pick two suits and a rarity to see what an ability actually lands for. Uses the same formulas as the mod. Ability base damage is set per-server, so
+          enter the one you're checking — <code>/thematic ability viewer &lt;id&gt;</code> in game will tell you.
         </p>
         <DamageCalculator />
+        <div className="mt-8">
+          <MatchupSimulator />
+        </div>
       </section>
 
       <section className="mt-10 space-y-6">

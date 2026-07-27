@@ -10,7 +10,7 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const staticPaths = ['/', '/suits', '/faq', '/play', '/book', '/blog', '/mechanics', '/mechanics/stats', '/mechanics/rarities', '/mechanics/shiny', '/mechanics/keybinds', '/mechanics/ores']
+        const staticPaths = ['/', '/suits', '/faq', '/play', '/book', '/blog', '/mechanics', '/mechanics/stats', '/mechanics/rarities', '/mechanics/shiny', '/mechanics/keybinds', '/mechanics/ores', '/abilities']
         const suitPaths = suits.filter((s) => !s.wip).map((s) => `/suits/${s.id}`)
         // "suit" entries live at /suits/$id (already covered above), not a separate /book/suit/$id page.
         const bookPaths = bookCategories.filter((c) => c.id !== 'suit').flatMap((c) => [`/book/${c.id}`, ...entriesFor(c.id).map((e) => `/book/${c.id}/${e.id}`)])
