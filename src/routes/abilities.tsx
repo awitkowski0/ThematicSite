@@ -109,7 +109,11 @@ function AbilitiesPage() {
     <div>
       <h1 className="text-3xl font-bold">Abilities</h1>
       <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Every ability in Thematic, what it does, and what it actually lands for against a real suit. For a specific matchup, use the{' '}
+        Every ability in Thematic, what it does, and what it actually lands for against a real suit. To pit two suits against each other, use the{' '}
+        <Link to="/matchup" className="text-blue-600 hover:underline dark:text-blue-400">
+          matchup simulator
+        </Link>
+        ; for a single hit, the{' '}
         <Link to="/mechanics/stats" className="text-blue-600 hover:underline dark:text-blue-400">
           damage calculator
         </Link>
