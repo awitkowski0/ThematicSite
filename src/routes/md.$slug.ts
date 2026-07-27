@@ -6,7 +6,7 @@ export const Route = createFileRoute('/md/$slug')({
   server: {
     handlers: {
       GET: async ({ params }) => {
-        const markdown = getMarkdown(params.slug)
+        const markdown = getMarkdown(params.slug, 'feed')
         if (!markdown) {
           return new Response(`Not found. Available: ${SLUGS.join(', ')}`, { status: 404, headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
         }

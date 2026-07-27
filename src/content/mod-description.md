@@ -25,9 +25,6 @@ Craft a Suit Bench, gather the parts a suit needs, and put it together. The in-g
 
 There's an official server at `thematic.bond` — click "Official Server" in the multiplayer menu in-game. See [Play](/play) to get set up.
 
-## Credits
-
-**Developers:** funalex, BBovard, ReadTheFish
-**Contributors:** Bean, BoyWonder, DerpyNarwhal, RobinCosmic, Bardock
-
 Questions? Check the [FAQ](/faq) or join the Discord.
+
+{{credits}}

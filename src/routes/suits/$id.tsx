@@ -61,6 +61,43 @@ function SuitDetail() {
         </div>
       </div>
 
+      {suit.stats.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Stats</h2>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            The range each stat rolls in — a higher{' '}
+            <Link to="/mechanics/rarities" className="text-blue-600 hover:underline dark:text-blue-400">
+              rarity
+            </Link>{' '}
+            pushes you toward the top of it. See{' '}
+            <Link to="/mechanics/stats" className="text-blue-600 hover:underline dark:text-blue-400">
+              how stats work
+            </Link>
+            .
+          </p>
+          <ul className="mt-3 max-w-md space-y-2">
+            {suit.stats.map((stat) => (
+              <li key={stat.id} className="flex items-center gap-3 text-sm">
+                <span className="w-16 shrink-0 text-neutral-600 dark:text-neutral-400">{stat.label}</span>
+                <span className="relative h-2 flex-1 rounded-full bg-neutral-100 dark:bg-neutral-900">
+                  <span
+                    className="absolute h-2 rounded-full"
+                    style={{
+                      left: `${stat.minimum}%`,
+                      width: `${Math.max(stat.maximum - stat.minimum, 1)}%`,
+                      backgroundColor: accentForCollection(suit.collection),
+                    }}
+                  />
+                </span>
+                <span className="w-16 shrink-0 text-right tabular-nums text-neutral-500">
+                  {stat.minimum}–{stat.maximum}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {suit.abilities.length > 0 && (
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Abilities</h2>
@@ -85,38 +122,6 @@ function SuitDetail() {
         </section>
       )}
 
-      {suit.texturePath && (
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold">Texture</h2>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">The skin file this suit is painted with, as it looks unwrapped.</p>
-          <div className="mt-3 flex flex-wrap gap-4">
-            <figure>
-              <img
-                src={suit.texturePath}
-                alt={`${suit.name} armor texture sheet`}
-                className="max-w-full rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
-                style={{ imageRendering: 'pixelated', width: 256 }}
-              />
-              <figcaption className="mt-1 text-xs text-neutral-500">Default</figcaption>
-            </figure>
-            {suit.shinyTexturePath && (
-              <figure>
-                <img
-                  src={suit.shinyTexturePath}
-                  alt={`${suit.name} shiny armor texture sheet`}
-                  className="max-w-full rounded border border-neutral-200 bg-neutral-100 dark:border-neutral-800 dark:bg-neutral-900"
-                  style={{ imageRendering: 'pixelated', width: 256 }}
-                />
-                <figcaption className="mt-1 text-xs text-neutral-500">
-                  <Link to="/mechanics/shiny" className="text-blue-600 hover:underline dark:text-blue-400">
-                    Shiny
-                  </Link>
-                </figcaption>
-              </figure>
-            )}
-          </div>
-        </section>
-      )}
     </div>
   )
 }

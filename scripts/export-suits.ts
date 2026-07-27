@@ -59,16 +59,33 @@ interface RawAbility {
   remove: boolean
 }
 
+interface RawStat {
+  identifier: string
+  minimum: number
+  maximum: number
+}
+
 interface RawArmor {
   id: string
   collection: string
   abilities: RawAbility[]
+  stats: RawStat[]
   tier: number
   recipe: string
   wip: boolean
   parent: string | null
   template: boolean
 }
+
+// The stats the in-game "Stats Explained" page actually documents, in the order it lists
+// them. Anything else in the data (base_regen, base_combat, base_knockbase_resistance) is
+// internal tuning that isn't explained to players, so it stays off the site.
+const DISPLAY_STATS: { id: string; label: string }[] = [
+  { id: 'thematic:base_defense', label: 'Defense' },
+  { id: 'thematic:base_utility', label: 'Utility' },
+  { id: 'thematic:base_generic_attack', label: 'Attack' },
+  { id: 'thematic:base_generic_speed', label: 'Speed' },
+]
 
 const DEFAULT_RECIPE = 'thematic:invalid'
 const DEFAULT_TIER = 1
@@ -85,6 +102,7 @@ function loadRawArmors(): Map<string, RawArmor> {
       const id = path.basename(file, '.json')
       const raw = readJson<{
         abilities?: { identifier: string; remove?: boolean }[]
+        stats?: { identifier: string; minimum?: number; maximum?: number }[]
         tier?: number
         'suit-recipe'?: string
         wip?: boolean
@@ -100,6 +118,7 @@ function loadRawArmors(): Map<string, RawArmor> {
         id,
         collection,
         abilities: (raw.abilities ?? []).map((a) => ({ identifier: a.identifier, remove: a.remove ?? false })),
+        stats: (raw.stats ?? []).map((s) => ({ identifier: s.identifier, minimum: s.minimum ?? 0, maximum: s.maximum ?? 0 })),
         tier: raw.tier ?? DEFAULT_TIER,
         recipe: raw['suit-recipe'] ?? DEFAULT_RECIPE,
         wip: raw.wip ?? DEFAULT_WIP,
@@ -115,6 +134,7 @@ interface MergedArmor {
   id: string
   collection: string
   abilities: string[] // deduped, ordered ability identifiers after add/replace/remove
+  stats: RawStat[]
   tier: number
   recipe: string
   wip: boolean
@@ -138,6 +158,7 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
       id,
       collection: self.collection,
       abilities: self.abilities.filter((a) => !a.remove).map((a) => a.identifier),
+      stats: self.stats,
       tier: self.tier,
       recipe: self.recipe,
       wip: self.wip,
@@ -160,10 +181,20 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
     }
   }
 
+  // Same rule ArmorCodec.mergeWithParent uses for stats: start from the parent's, then let
+  // any stat the child declares replace the parent's entry with that identifier.
+  const stats = [...parentMerged.stats]
+  for (const stat of self.stats) {
+    const existingIndex = stats.findIndex((s) => s.identifier === stat.identifier)
+    if (existingIndex !== -1) stats.splice(existingIndex, 1)
+    stats.push(stat)
+  }
+
   const merged: MergedArmor = {
     id,
     collection: self.collection,
     abilities,
+    stats,
     tier: self.tier === DEFAULT_TIER ? parentMerged.tier : self.tier,
     recipe: self.recipe === DEFAULT_RECIPE ? parentMerged.recipe : self.recipe,
     wip: self.wip === DEFAULT_WIP ? parentMerged.wip : self.wip,
@@ -183,6 +214,20 @@ function loadPatchouliSuitNames(): Map<string, string> {
     map.set(stripNamespace(raw.icon), raw.name)
   }
   return map
+}
+
+// The starter suits are ids like "alext9" = Alex, tier 9. Title-casing those yields a
+// meaningless "Alext9", so name them properly. Matching the four known starter characters
+// explicitly rather than a generic <name>t<number> pattern, which would mangle unrelated
+// ids (e.g. x_men's "beast1" -> "Beas" tier 1).
+const STARTER_BASES = ['alex', 'steve', 'toby', 'herobrine']
+
+function starterDisplayName(id: string): string | undefined {
+  for (const base of STARTER_BASES) {
+    const match = new RegExp(`^${base}t(\\d+)$`).exec(id)
+    if (match) return `${titleCase(base)} (Tier ${match[1]})`
+  }
+  return undefined
 }
 
 function loadAbilityInfo(): Map<string, { name: string; description?: string }> {
@@ -313,6 +358,7 @@ export function exportSuits() {
     collectionName: string
     tier: number
     wip: boolean
+    stats: { id: string; label: string; minimum: number; maximum: number }[]
     abilities: { id: string; name: string; description?: string }[]
     recipe?: RecipeIngredient[]
     texturePath?: string
@@ -338,11 +384,15 @@ export function exportSuits() {
 
     suits.push({
       id,
-      name: displayName ?? titleCase(id),
+      name: displayName ?? starterDisplayName(id) ?? titleCase(id),
       collection: merged.collection,
       collectionName: collectionMeta?.name ?? titleCase(merged.collection),
       tier: merged.tier,
       wip: merged.wip,
+      stats: DISPLAY_STATS.flatMap(({ id: statId, label }) => {
+        const stat = merged.stats.find((s) => s.identifier === statId)
+        return stat ? [{ id: statId, label, minimum: stat.minimum, maximum: stat.maximum }] : []
+      }),
       abilities: merged.abilities.map((abilityId) => ({
         id: abilityId,
         name: abilityInfo.get(abilityId)?.name ?? titleCase(abilityId),

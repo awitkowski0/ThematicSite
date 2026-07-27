@@ -26,10 +26,10 @@ function BookIndex() {
 
       <div className="mt-8 space-y-8">
         {topLevelCategories()
-          .filter((c) => !HIDDEN_CATEGORIES.has(c.id))
+          .filter((c) => !HIDDEN_CATEGORIES.has(c.id) && c.entryCount > 0)
           .sort((a, b) => a.sortnum - b.sortnum)
           .map((category) => {
-            const children = childCategories(category.id).filter((c) => !HIDDEN_CATEGORIES.has(c.id))
+            const children = childCategories(category.id).filter((c) => !HIDDEN_CATEGORIES.has(c.id) && c.entryCount > 0)
             return (
               <section key={category.id}>
                 <Link to="/book/$category" params={{ category: category.id }} className="text-lg font-semibold hover:underline">

@@ -142,8 +142,10 @@ export function exportBook() {
     console.warn(`[export-book] ${uncategorized} entries had no "category" field matching a known categories/*.json — skipped`)
   }
 
+  // Keep every category, including ones whose entries were all picture-only. Their own
+  // `description` is still useful prose (the Shinies category description is what
+  // /mechanics/shiny is built from), so filter by entryCount in the UI, not here.
   const categoriesOut = [...categories.values()]
-    .filter((c) => (entriesByCategory.get(c.id)?.length ?? 0) > 0)
     .sort((a, b) => {
       const aTop = a.parentId ? (categories.get(a.parentId)?.sortnum ?? 9999) : a.sortnum
       const bTop = b.parentId ? (categories.get(b.parentId)?.sortnum ?? 9999) : b.sortnum

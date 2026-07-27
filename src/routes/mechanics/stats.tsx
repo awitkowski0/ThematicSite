@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { entriesFor } from '../../lib/book'
 import { MarkdownContent } from '../../components/MarkdownContent'
+import { DamageCalculator } from '../../components/DamageCalculator'
 
 export const Route = createFileRoute('/mechanics/stats')({
   head: () => ({
@@ -19,11 +20,19 @@ function StatsPage() {
         ← Mechanics
       </Link>
       <h1 className="mt-2 text-3xl font-bold">Stats</h1>
-      <div className="mt-6 space-y-6">
-        {entry?.textBlocks.map((block, i) => <MarkdownContent key={i} markdown={block} />) ?? (
-          <p className="text-neutral-500 dark:text-neutral-400">Not available in this build.</p>
-        )}
-      </div>
+
+      <section className="mt-6">
+        <h2 className="text-lg font-semibold">Calculator</h2>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+          Work out what an attack actually does against a given Defense, or how much Utility cuts a cooldown. Uses the same formulas as the mod.
+        </p>
+        <DamageCalculator />
+      </section>
+
+      <section className="mt-10 space-y-6">
+        <h2 className="text-lg font-semibold">How it works</h2>
+        {entry?.textBlocks.map((block, i) => <MarkdownContent key={i} markdown={block} />)}
+      </section>
     </div>
   )
 }

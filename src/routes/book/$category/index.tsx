@@ -6,7 +6,10 @@ import { entriesFor, getCategory } from '../../../lib/book'
 export const Route = createFileRoute('/book/$category/')({
   loader: ({ params }) => {
     const category = getCategory(params.category)
-    if (!category) throw notFound()
+    // Categories still exist in the data even when all their entries were picture-only
+    // (their descriptions get reused elsewhere, e.g. /mechanics/shiny) — but there's
+    // nothing to browse here, so treat them as not found.
+    if (!category || category.entryCount === 0) throw notFound()
     return category
   },
   head: ({ loaderData }) => ({

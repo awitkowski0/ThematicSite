@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { MarkdownContent } from '../components/MarkdownContent'
 import { DiscordPanel } from '../components/DiscordPanel'
+import { Credits } from '../components/Credits'
 import { getMarkdown, stats } from '../lib/content'
 
 export const Route = createFileRoute('/')({
@@ -37,6 +38,7 @@ function Home() {
         </Link>
       </div>
       <MarkdownContent markdown={markdown} />
+      <Credits />
     </div>
   )
 }

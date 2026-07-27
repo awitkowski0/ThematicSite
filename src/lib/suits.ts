@@ -33,6 +33,13 @@ export function getRecipeNode(itemId: string): RecipeNode | undefined {
   return recipeGraph[itemId]
 }
 
+export interface SuitStat {
+  id: string
+  label: string
+  minimum: number
+  maximum: number
+}
+
 export interface Suit {
   id: string
   name: string
@@ -40,6 +47,7 @@ export interface Suit {
   collectionName: string
   tier: number
   wip: boolean
+  stats: SuitStat[]
   abilities: SuitAbility[]
   recipe?: RecipeIngredient[]
   texturePath?: string

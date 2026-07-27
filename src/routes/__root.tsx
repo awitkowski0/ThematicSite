@@ -65,7 +65,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
         </header>
         <main className="mx-auto max-w-4xl px-4 py-10">{children}</main>
         <footer className="mx-auto max-w-4xl px-4 py-10 text-sm text-neutral-500 dark:text-neutral-500">
-          Thematic is an unofficial fan mod. Not affiliated with DC, Marvel, Amazon, or Skybound.
+          Thematic is an unofficial fan project, not affiliated with or endorsed by Mojang, Microsoft, DC, Marvel, Amazon, Skybound, or any other rights
+          holder. All characters and trademarks belong to their respective owners. Not an official Minecraft product.
         </footer>
         <Scripts />
       </body>
