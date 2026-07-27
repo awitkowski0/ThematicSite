@@ -24,7 +24,7 @@ function SuitsIndex() {
     <div>
       <h1 className="text-3xl font-bold">Suits</h1>
       <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        {stats.suitCount} suits across {stats.collectionCount} collections. Generated from the mod's own data — always current.
+        Every suit in Thematic — {stats.suitCount} of them across {stats.collectionCount} collections. Pick one to see its abilities and how to craft it.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">

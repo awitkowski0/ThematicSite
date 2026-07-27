@@ -35,18 +35,11 @@ function BookEntryDetail() {
       </Link>
       <h1 className="mt-2 text-3xl font-bold">{entry.name}</h1>
 
-      {entry.textBlocks.length > 0 ? (
-        <div className="mt-6 space-y-6">
-          {entry.textBlocks.map((block, i) => (
-            <MarkdownContent key={i} markdown={block} />
-          ))}
-        </div>
-      ) : (
-        <p className="mt-6 text-neutral-500 dark:text-neutral-400">
-          This entry doesn't have any portable text — it's likely a live in-game display (a recipe, a stats readout) rather than prose. Check the in-game
-          guidebook for it.
-        </p>
-      )}
+      <div className="mt-6 space-y-6">
+        {entry.textBlocks.map((block, i) => (
+          <MarkdownContent key={i} markdown={block} />
+        ))}
+      </div>
     </div>
   )
 }

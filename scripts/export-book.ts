@@ -102,6 +102,7 @@ export function exportBook() {
   const categories = loadCategories()
   const entriesByCategory = new Map<string, BookEntry[]>()
   const skipCounts = new Map<string, number>()
+  const emptyByCategory = new Map<string, number>()
   let total = 0
   let uncategorized = 0
 
@@ -123,6 +124,14 @@ export function exportBook() {
       name: raw.name ?? titleCase(id),
       textBlocks: flattenPages(raw.pages, skipCounts),
     }
+    // Entries with no readable text are picture-only in-game (suit/alt/shiny galleries are
+    // rendered 3D models, plus some recipe-only pages). There's nothing to show on the web,
+    // so drop them rather than publishing links to empty pages.
+    if (entry.textBlocks.length === 0) {
+      emptyByCategory.set(categoryId, (emptyByCategory.get(categoryId) ?? 0) + 1)
+      continue
+    }
+
     const list = entriesByCategory.get(categoryId) ?? []
     list.push(entry)
     entriesByCategory.set(categoryId, list)
@@ -153,6 +162,11 @@ export function exportBook() {
   fs.writeFileSync(path.join(OUT_DATA_DIR, 'book.generated.json'), JSON.stringify(book, null, 2))
 
   console.log(`[export-book] wrote ${total} entries across ${categoriesOut.length} categories`)
+  const emptySummary = [...emptyByCategory.entries()].sort((a, b) => b[1] - a[1])
+  if (emptySummary.length > 0) {
+    const totalEmpty = emptySummary.reduce((n, [, c]) => n + c, 0)
+    console.log(`[export-book] dropped ${totalEmpty} picture-only entries with no readable text: ${emptySummary.map(([c, n]) => `${c}=${n}`).join(', ')}`)
+  }
   const skipSummary = [...skipCounts.entries()].sort((a, b) => b[1] - a[1])
   if (skipSummary.length > 0) {
     console.log(`[export-book] skipped pages by type (no generic text mapping): ${skipSummary.map(([t, n]) => `${t}=${n}`).join(', ')}`)

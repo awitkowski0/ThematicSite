@@ -17,7 +17,7 @@ function BlogIndex() {
   return (
     <div>
       <h1 className="text-3xl font-bold">Changelog</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">Every release, generated from the mod's own changelog history.</p>
+      <p className="mt-2 text-neutral-600 dark:text-neutral-400">What's new in each Thematic release.</p>
 
       <ul className="mt-8 space-y-4">
         {blogPosts.map((post) => (

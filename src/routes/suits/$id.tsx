@@ -78,7 +78,7 @@ function SuitDetail() {
       {suit.recipe && suit.recipe.length > 0 && (
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Suit Bench recipe</h2>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Click an ingredient to see how it's crafted, where that's known.</p>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Click any ingredient to see how to craft it.</p>
           <div className="mt-3">
             <RecipeTree ingredients={suit.recipe} />
           </div>
@@ -87,10 +87,8 @@ function SuitDetail() {
 
       {suit.texturePath && (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold">Armor texture</h2>
-          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-            The raw texture sheet this suit's 3D model is painted with — it's a UV layout, not a picture of the suit.
-          </p>
+          <h2 className="text-lg font-semibold">Texture</h2>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">The skin file this suit is painted with, as it looks unwrapped.</p>
           <div className="mt-3 flex flex-wrap gap-4">
             <figure>
               <img

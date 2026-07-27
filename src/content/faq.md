@@ -1,29 +1,29 @@
 # FAQ
 
-### Does Thematic support Forge or NeoForge?
+### Does Thematic work on Forge or NeoForge?
 
-No. Thematic is built for Fabric only, and there are no plans to port it.
+No — Fabric only, and there are no plans to change that.
 
-### How many suits does Thematic have?
+### How many suits are there?
 
-{{suitCount}} released suits across {{collectionCount}} collections as of this page's last build. That count comes directly from the mod's own data every time it updates — it isn't hand-maintained, so it doesn't go stale.
+{{suitCount}} across {{collectionCount}} collections. You can [browse all of them](/suits).
 
 ### Will you add [character]?
 
-Possibly already in progress. Open the mod's config through ModMenu and turn off "Hide Suits" to see suits that are still work-in-progress.
+They might already be on the way. Open the mod's settings through ModMenu and turn off "Hide Suits" to see everything still being worked on.
 
 ### How do I craft a suit?
 
-Craft a Suit Bench, then use it to craft suits from their component parts. Each suit's page at [thematic.bond/suits](/suits) lists its exact recipe; the in-game Patchouli guidebook covers the same information.
+Build a Suit Bench first, then use it to put a suit together from its parts. Every suit's page lists exactly what it needs — start at [Suits](/suits) and pick one. The in-game guidebook covers the same thing if you'd rather look it up while playing.
 
-### My suit isn't rendering or working correctly — what do I do?
+### My suit looks wrong or isn't working
 
-Join the Discord. There's an active community and developers who can help troubleshoot.
+Hop in the Discord — there's an active community and the developers are around to help.
 
-### Is there an official server?
+### Is there a server?
 
-Yes — click "Official Server" in the multiplayer menu in-game to join.
+Yes. Click "Official Server" in the multiplayer menu in-game, or add `thematic.bond` yourself. See [Play](/play) for setup.
 
-### Where does the suit and ability information on this site come from?
+### Something on this site looks wrong
 
-Directly from the mod's own guidebook and ability data, generated at build time from the same files the mod ships with. If something on a suit's page looks wrong, it's a data issue in the mod itself rather than something hand-typed for this site — worth reporting on Discord.
+Everything here comes straight out of the mod, so if a suit's abilities or recipe look off, it's usually wrong in-game too. Let us know on Discord and we'll fix it at the source.

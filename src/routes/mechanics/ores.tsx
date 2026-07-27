@@ -4,7 +4,7 @@ import { Ore, oresByMaterial } from '../../lib/ores'
 
 export const Route = createFileRoute('/mechanics/ores')({
   head: () => ({
-    meta: [{ title: 'Ores — Thematic Mechanics' }, { name: 'description', content: 'Y-level and spawn frequency for every custom ore Thematic adds, generated from the mod\'s own worldgen data.' }],
+    meta: [{ title: 'Ores — Thematic Mechanics' }, { name: 'description', content: 'What depth to mine at for every ore Thematic adds, and how common each one is.' }],
   }),
   component: OresPage,
 })
@@ -39,7 +39,7 @@ function OresPage() {
       </Link>
       <h1 className="mt-2 text-3xl font-bold">Ores</h1>
       <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Y-level ranges and vein sizes, generated directly from the mod's worldgen data — not a hand-drawn map, but accurate.
+        What depth to dig at for each ore Thematic adds, and how common it is down there.
       </p>
 
       <div className="mt-8 space-y-6">

@@ -17,8 +17,7 @@ function MdIndex() {
     <div>
       <h1 className="text-3xl font-bold">Markdown feeds</h1>
       <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Raw Markdown versions of this site's pages — always current, safe to paste directly into CurseForge, Modrinth, or anywhere else that
-        wants plain Markdown instead of a live page.
+        Plain Markdown copies of these pages, for pasting into CurseForge, Modrinth, or anywhere else that wants text instead of a web page.
       </p>
       <ul className="mt-6 space-y-2">
         {SLUGS.map((slug) => (

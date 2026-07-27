@@ -16,15 +16,15 @@ export const Route = createFileRoute('/mechanics/rarities')({
 const UNDOCUMENTED_TIERS = [
   {
     name: 'Starter',
-    body: "The baseline tier, below Common. The mod's starter suits (see the guidebook's Starters section) sit here rather than being crafted at a rarity.",
+    body: 'Below Common. This is what the starter suits use — you get them rather than craft them, so they sit outside the normal rarity ladder.',
   },
   {
     name: 'Mythic',
-    body: "A tier above Legendary. Which suits or crafting paths can reach it isn't documented anywhere public.",
+    body: "One step above Legendary. You won't get there by combining suits in an anvil.",
   },
   {
     name: 'Unique',
-    body: 'The highest tier — reserved for single-owner suits, where only one copy of that specific suit is meant to exist at a time.',
+    body: 'The rarest tier. Only one copy of a Unique suit is meant to exist at a time — if you have it, nobody else does.',
   },
 ]
 
@@ -42,10 +42,9 @@ function RaritiesPage() {
         {entry?.textBlocks.map((block, i) => <MarkdownContent key={i} markdown={block} />)}
       </div>
 
-      <h2 className="mt-10 text-lg font-semibold">Higher tiers</h2>
+      <h2 className="mt-10 text-lg font-semibold">Rarer than Legendary</h2>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-        Three more tiers exist above Legendary in the mod's code but aren't explained in the in-game guidebook — noted here for completeness, not ported from
-        anywhere.
+        Three tiers you won't find in the in-game guidebook. They're rare, and mostly turn up through events or admins rather than normal crafting.
       </p>
       <ul className="mt-4 space-y-4">
         {UNDOCUMENTED_TIERS.map((tier) => (
