@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { abilityBalances } from '../lib/abilityStats'
 import { suits } from '../lib/suits'
 import { DEFAULT_CPS, HEALTH_DISPLAY_SCALE, RARITIES, formatDuration, simulateFight, statValue } from '../lib/combat'
 import { clearPersistedState, usePersistentState } from '../lib/usePersistentState'
+import { decodeMatchup, encodeMatchup } from '../lib/shareState'
+import { formatDuration as fmt } from '../lib/combat'
 
 const selectClass =
   'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
@@ -56,6 +58,55 @@ export function MatchupSimulator() {
   const [ultimateLockout, setUltimateLockout] = usePersistentState('ultLock', true)
   const [meleeUptime, setMeleeUptime] = usePersistentState('meleeUptime', 0.45)
 
+  // A shared link wins over whatever this device had stored, but only on first load —
+  // after that the user's edits take over as normal.
+  const [shareApplied, setShareApplied] = useState(false)
+  useEffect(() => {
+    if (shareApplied) return
+    setShareApplied(true)
+    const shared = decodeMatchup(window.location.search)
+    if (Object.keys(shared).length === 0) return
+    if (shared.atkSuit) setAttackerId(shared.atkSuit)
+    if (shared.defSuit) setDefenderId(shared.defSuit)
+    if (shared.atkIv !== undefined) setAttackerIv(shared.atkIv)
+    if (shared.defIv !== undefined) setDefenderIv(shared.defIv)
+    if (shared.cps !== undefined) setCps(shared.cps)
+    if (shared.melee !== undefined) setIncludeMelee(shared.melee)
+    if (shared.onType !== undefined) setOnFightingType(shared.onType)
+    if (shared.inputDelay !== undefined) setInputDelay(shared.inputDelay)
+    if (shared.abilityMiss !== undefined) setAbilityMissRate(shared.abilityMiss)
+    if (shared.meleeMiss !== undefined) setMeleeMissRate(shared.meleeMiss)
+    if (shared.ultLock !== undefined) setUltimateLockout(shared.ultLock)
+    if (shared.meleeUptime !== undefined) setMeleeUptime(shared.meleeUptime)
+  }, [shareApplied])
+
+  const [copied, setCopied] = useState(false)
+  const shareLink = () => {
+    const qs = encodeMatchup({
+      atkSuit: attackerId,
+      defSuit: defenderId,
+      atkIv: attackerIv,
+      defIv: defenderIv,
+      cps,
+      melee: includeMelee,
+      onType: onFightingType,
+      inputDelay,
+      abilityMiss: abilityMissRate,
+      meleeMiss: meleeMissRate,
+      ultLock: ultimateLockout,
+      meleeUptime,
+    })
+    const url = `${window.location.origin}${window.location.pathname}?${qs}`
+    window.history.replaceState(null, '', url)
+    navigator.clipboard?.writeText(url).then(
+      () => {
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
+      },
+      () => {},
+    )
+  }
+
   const attacker = suits.find((s) => s.id === attackerId)
   const defender = suits.find((s) => s.id === defenderId)
 
@@ -93,16 +144,21 @@ export function MatchupSimulator() {
     <div className="rounded-lg border border-neutral-200 p-5 dark:border-neutral-800">
       <div className="flex items-baseline justify-between gap-4">
         <h3 className="font-semibold">Matchup</h3>
-        <button
-          type="button"
-          onClick={() => {
-            clearPersistedState()
-            window.location.reload()
-          }}
-          className="text-xs text-neutral-500 hover:underline"
-        >
-          Reset
-        </button>
+        <div className="flex items-center gap-3">
+          <button type="button" onClick={shareLink} className="text-xs text-blue-600 hover:underline dark:text-blue-400">
+            {copied ? 'Link copied' : 'Share this matchup'}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              clearPersistedState()
+              window.location.href = window.location.pathname
+            }}
+            className="text-xs text-neutral-500 hover:underline"
+          >
+            Reset
+          </button>
+        </div>
       </div>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
         Everything one suit can throw at another, with the friction of an actual fight. Your settings are remembered on this device.
@@ -207,6 +263,35 @@ export function MatchupSimulator() {
           </ul>
         ) : (
           <p className="mt-4 text-sm text-neutral-500">{attacker?.name ?? 'This suit'} has no cooldown-gated damaging abilities. Turn on melee to see what fists alone do.</p>
+        )}
+
+        {result.events.length > 0 && (
+          <details className="mt-5">
+            <summary className="cursor-pointer text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+              Fight log ({result.events.length} events{result.eventsTruncated ? ', truncated' : ''})
+            </summary>
+            <ol className="mt-3 max-h-80 overflow-y-auto rounded-md border border-neutral-200 text-sm dark:border-neutral-800">
+              {result.events.map((e, i) => (
+                <li
+                  key={i}
+                  className={
+                    'flex items-baseline gap-3 border-b border-neutral-100 px-3 py-1.5 last:border-b-0 dark:border-neutral-900 ' +
+                    (e.kind === 'kill' ? 'bg-green-50 font-medium dark:bg-green-950/30' : e.kind === 'idle' ? 'bg-amber-50 dark:bg-amber-950/20' : '')
+                  }
+                >
+                  <span className="w-14 shrink-0 tabular-nums text-xs text-neutral-500">{fmt(e.t)}</span>
+                  <span className="min-w-0 flex-1 truncate">{e.label}</span>
+                  {e.damage > 0 && <span className="shrink-0 tabular-nums text-xs text-neutral-500">-{(e.damage * HEALTH_DISPLAY_SCALE).toFixed(0)}</span>}
+                  <span className="w-16 shrink-0 text-right tabular-nums text-xs text-neutral-500">
+                    {(e.hpAfter * HEALTH_DISPLAY_SCALE).toFixed(0)} hp
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-2 text-xs text-neutral-500">
+              Melee is rolled up between ability presses rather than logged per swing. Health is shown the way the in-game bar shows it.
+            </p>
+          </details>
         )}
       </div>
     </div>

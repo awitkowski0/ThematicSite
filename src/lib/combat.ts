@@ -141,11 +141,28 @@ export interface FightSource {
   detail: string
 }
 
+export interface FightEvent {
+  /** Seconds into the fight. */
+  t: number
+  kind: 'ability' | 'melee' | 'kill' | 'idle'
+  label: string
+  /** Actual health removed by this entry. */
+  damage: number
+  /** Target health remaining afterwards, in actual units. */
+  hpAfter: number
+}
+
 export interface FightResult {
   sources: FightSource[]
   totalDps: number
   ttk?: number
+  events: FightEvent[]
+  /** True when the log was cut short to keep it readable. */
+  eventsTruncated: boolean
 }
+
+/** Keeps a long stalemate from producing thousands of log lines. */
+const MAX_EVENTS = 120
 
 export interface FightOptions {
   abilities: { id: string; name: string; damage?: number; cooldown?: number; duration?: number; range?: number }[]
@@ -228,11 +245,38 @@ export function simulateFight(o: FightOptions): FightResult {
   let lockedUntil = 0
   let t = 0
 
+  const events: FightEvent[] = []
+  let eventsTruncated = false
+  // Melee lands continuously; logging every 50ms step would bury the log, so it's rolled
+  // up and flushed as one entry whenever something noteworthy happens.
+  let pendingMelee = 0
+  let pendingMeleeSince = 0
+
+  const push = (e: FightEvent) => {
+    if (events.length < MAX_EVENTS) events.push(e)
+    else eventsTruncated = true
+  }
+
+  const flushMelee = (now: number) => {
+    if (pendingMelee <= 0) return
+    const swings = Math.round((now - pendingMeleeSince) * o.cps * reach)
+    push({
+      t: pendingMeleeSince,
+      kind: 'melee',
+      label: swings > 0 ? `Melee × ${swings}` : 'Melee',
+      damage: pendingMelee,
+      hpAfter: hp,
+    })
+    pendingMelee = 0
+    pendingMeleeSince = now
+  }
+
   for (; t < SIM_CAP && hp > 0; t += SIM_STEP) {
     if (meleePerHit) {
       const chunk = meleePerHit.actual * o.cps * meleeHit * reach * SIM_STEP
       hp -= chunk
       dealt.set('Melee', (dealt.get('Melee') ?? 0) + chunk)
+      pendingMelee += chunk
     }
 
     if (t >= nextPress && t >= lockedUntil) {
@@ -244,6 +288,8 @@ export function simulateFight(o: FightOptions): FightResult {
         uses.set(choice.name, (uses.get(choice.name) ?? 0) + 1)
         readyAt.set(choice.id, t + choice.cooldown)
         nextPress = t + o.inputDelay
+        flushMelee(t)
+        push({ t, kind: 'ability', label: choice.name, damage: landed, hpAfter: Math.max(0, hp) })
         // AbilityEventDispatcher.java:167-199 — an ultimate parks your other abilities for
         // its duration.
         if (choice.ult && o.ultimateLockout) lockedUntil = t + choice.duration
@@ -253,6 +299,12 @@ export function simulateFight(o: FightOptions): FightResult {
 
   const killed = hp <= 0
   const elapsed = Math.max(t, SIM_STEP)
+  flushMelee(elapsed)
+  push(
+    killed
+      ? { t: elapsed, kind: 'kill', label: 'Target down', damage: 0, hpAfter: 0 }
+      : { t: elapsed, kind: 'idle', label: 'Still standing', damage: 0, hpAfter: Math.max(0, hp) },
+  )
 
   const sources: FightSource[] = [...dealt.entries()]
     .map(([label, total]) => {
@@ -268,7 +320,7 @@ export function simulateFight(o: FightOptions): FightResult {
     .sort((a, b) => b.dps - a.dps)
 
   const totalDps = sources.reduce((s, x) => s + x.dps, 0)
-  return { sources, totalDps, ttk: killed ? elapsed : undefined }
+  return { sources, totalDps, ttk: killed ? elapsed : undefined, events, eventsTruncated }
 }
 
 export function formatDuration(seconds: number): string {
