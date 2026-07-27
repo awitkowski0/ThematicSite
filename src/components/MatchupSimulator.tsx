@@ -216,7 +216,7 @@ export function MatchupSimulator() {
             max={1}
             step={0.05}
             format={(v) => `${Math.round(v * 100)}%`}
-            hint="They strafe and keep distance — also gates abilities under 5 blocks"
+            hint="They strafe and keep distance, so you can't always reach them"
           />
           <div className="space-y-2 pt-1">
             <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">

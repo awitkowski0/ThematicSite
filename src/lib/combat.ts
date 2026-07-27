@@ -183,16 +183,11 @@ export interface FightOptions {
   /**
    * 0-1. Fraction of the fight you're actually close enough to swing, given the other
    * player strafing and keeping distance. Separate from miss rate: this is "could you
-   * reach them at all", not "did the swing connect".
+   * reach them at all", not "did the swing connect". Applies to melee only — abilities
+   * are assumed usable whenever they're off cooldown, whatever their range.
    */
   meleeUptime: number
 }
-
-/**
- * Abilities reaching no further than this (blocks) need you in roughly the same place melee
- * does, so they're gated by closing distance too. Longer-ranged ones aren't.
- */
-export const MELEE_RANGE_BLOCKS = 5
 
 const SIM_STEP = 0.05 // seconds
 const SIM_CAP = 900 // give up after 15 simulated minutes
@@ -216,16 +211,11 @@ export function simulateFight(o: FightOptions): FightResult {
     .map((a) => {
       const ult = isUltimate(a.name)
       const hits = hitsPerUse(a.id)
-      // Short-range abilities need you in melee range, so they suffer the same problem
-      // closing distance does. Unknown range is treated as ranged (no penalty) rather than
-      // guessed at.
-      const shortRanged = a.range !== undefined && a.range > 0 && a.range <= MELEE_RANGE_BLOCKS
       return {
         id: a.id,
         name: a.name,
         ult,
         hits,
-        shortRanged,
         perUse: abilityDamage(a.damage!, o.defense, hits),
         cooldown: actualCooldown(a.cooldown!, o.utility, ult),
         duration: a.duration ?? 0,
@@ -282,7 +272,7 @@ export function simulateFight(o: FightOptions): FightResult {
     if (t >= nextPress && t >= lockedUntil) {
       const choice = usable.find((a) => (readyAt.get(a.id) ?? 0) <= t)
       if (choice) {
-        const landed = choice.perUse.actual * abilityHit * (choice.shortRanged ? reach : 1)
+        const landed = choice.perUse.actual * abilityHit
         hp -= landed
         dealt.set(choice.name, (dealt.get(choice.name) ?? 0) + landed)
         uses.set(choice.name, (uses.get(choice.name) ?? 0) + 1)
