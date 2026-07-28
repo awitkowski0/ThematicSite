@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
+import { cardLinkClass } from '../../components/controls'
+
 export const Route = createFileRoute('/mechanics/')({
   head: () => ({
     meta: [{ title: 'Mechanics — Thematic' }, { name: 'description', content: 'How stats, rarity, shinies, keybinds, and ore spawns work in Thematic.' }],
@@ -23,7 +25,7 @@ function MechanicsIndex() {
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         {PAGES.map((page) => (
           <li key={page.to}>
-            <Link to={page.to} className="block rounded-md border border-neutral-200 p-4 hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600">
+            <Link to={page.to} className={cardLinkClass}>
               <div className="font-semibold">{page.title}</div>
               <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{page.description}</div>
             </Link>

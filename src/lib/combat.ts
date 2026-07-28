@@ -7,30 +7,30 @@
 //   ThematicAbility.java:576-605                    -> ability damage has NO attack term
 //   ThematicHelper.getAttack:809-823                -> melee only, /8 when off-type
 //   InGameHudThematicUIMixin.java:133               -> health shown as actual x50
-import { Suit } from './suits'
+import { AbilitySlot, Suit } from './suits'
 
 // Generic form behind every stat: (max - min) * (value - 1) / 98 + min.
 const scale = (value: number, min: number, max: number) => ((max - min) * (value - 1)) / 98 + min
 
 // Real ranges from Stats.java — these are gamerule-tunable per server, so a given world can
 // differ, but these are the shipped defaults.
-export const ATTACK_MIN = 6.5
-export const ATTACK_MAX = 8.0
-export const DEFENSE_MIN = 70
-export const DEFENSE_MAX = 78
-export const UTILITY_MIN = 19
-export const UTILITY_MAX = 21
+const ATTACK_MIN = 6.5
+const ATTACK_MAX = 8.0
+const DEFENSE_MIN = 70
+const DEFENSE_MAX = 78
+const UTILITY_MIN = 19
+const UTILITY_MAX = 21
 
 /** Melee/arrow attack power. NOT used by abilities — see abilityDamage(). */
-export const attackOutput = (value: number) => scale(value, ATTACK_MIN, ATTACK_MAX)
+const attackOutput = (value: number) => scale(value, ATTACK_MIN, ATTACK_MAX)
 /** Incoming damage is DIVIDED by this (DefenseStatMixin: `amount /= defense`). */
-export const defenseReduction = (value: number) => scale(value, DEFENSE_MIN, DEFENSE_MAX)
+const defenseReduction = (value: number) => scale(value, DEFENSE_MIN, DEFENSE_MAX)
 /** Utility is a REVERSE stat: higher value -> lower output -> shorter cooldown. */
-export const utilityOutput = (value: number) => UTILITY_MAX + UTILITY_MIN - scale(value, UTILITY_MIN, UTILITY_MAX)
+const utilityOutput = (value: number) => UTILITY_MAX + UTILITY_MIN - scale(value, UTILITY_MIN, UTILITY_MAX)
 
 // Wrong fighting type for the situation (bare hands = BRAWLER, weapon = DUELIST) divides
 // melee attack by 8 — undocumented, and the biggest single swing in the melee formula.
-export const OFF_TYPE_PENALTY = 8
+const OFF_TYPE_PENALTY = 8
 
 // The HUD renders health as actual × 50, so a 20-heart player reads as 1000.
 export const HEALTH_DISPLAY_SCALE = 50
@@ -48,25 +48,42 @@ export const MAX_SYNERGY = 10
 export const FIST_BASE_DAMAGE = 1
 export const DEFAULT_CPS = 6
 
+// Keyed on the mod's stat ids rather than display labels, so renaming a label can't
+// silently zero the combat maths.
+export const STAT_IDS = {
+  defense: 'thematic:base_defense',
+  utility: 'thematic:base_utility',
+  attack: 'thematic:base_generic_attack',
+  speed: 'thematic:base_generic_speed',
+} as const
+
+export type StatKey = keyof typeof STAT_IDS
+
 /** Base + (IV*2) + Synergy. StatUtils.modifiedStat clamps at >= 0 only — no upper clamp. */
-export function statValue(suit: Suit | undefined, label: string, iv: number, synergy = 0): number | undefined {
-  const range = suit?.stats.find((s) => s.label === label)
+export function statValue(suit: Suit | undefined, stat: StatKey, iv: number, synergy = 0): number | undefined {
+  const range = suit?.stats.find((s) => s.id === STAT_IDS[stat])
   if (!range) return undefined
   return Math.max(0, Math.min(range.maximum, range.minimum) + iv * 2 + synergy)
 }
 
 // The sheet's `damage` column doubles as a generic numeric parameter for non-attacks
 // (flight = 0.006 for speed, acrobatics = 0.8 for a jump multiplier), so a damage value
-// alone doesn't mean an ability hurts anyone. The guidebook's name prefixes are the
-// reliable signal.
-const NON_DAMAGING_PREFIXES = ['[PASSIVE]', '[EQUIP]', '[COSMETIC]']
+// alone doesn't mean an ability hurts anyone.
+//
+// Two signals say what an ability actually is, and neither is sufficient alone:
+//   - its keybind slot (mod data) — catches unprefixed passives/equips like `mob_friendly`
+//     and `crafting_table`, which the name gives no hint about;
+//   - its display-name prefix (guidebook) — catches things bound to an ability key that
+//     are still cosmetic, e.g. `[COSMETIC] Glow` on ability_2.
+// Requiring both to agree keeps non-attacks out without inventing a third source of truth.
+const NON_DAMAGING_SLOTS: AbilitySlot[] = ['passive', 'equip', 'cosmetic']
+const NON_DAMAGING_PREFIXES = ['[PASSIVE]', '[EQUIP]', '[COSMETIC]', '[VEHICLE]']
 
-export function isDamagingAbility(name: string, damage: number | undefined): boolean {
+export function isDamagingAbility(slot: AbilitySlot, damage: number | undefined, name = ''): boolean {
   if (damage === undefined || damage <= 0) return false
+  if (NON_DAMAGING_SLOTS.includes(slot)) return false
   return !NON_DAMAGING_PREFIXES.some((p) => name.startsWith(p))
 }
-
-export const isUltimate = (name: string) => name.startsWith('[ULT]')
 
 // Hits landed per activation are hardcoded per ability in Java, not in any data file, so
 // they can only be filled in as each one is traced. Everything else assumes a single hit,
@@ -80,7 +97,7 @@ export function hitsPerUse(abilityId: string): number {
   return ABILITY_HITS[abilityId] ?? 1
 }
 
-export interface DamageResult {
+interface DamageResult {
   actual: number
   displayed: number
   perHitActual: number
@@ -108,7 +125,7 @@ export function abilityDamage(baseDamage: number, defense: number, hits = 1): Da
 }
 
 /** Melee, which DOES use the Attack stat (ThematicHelper.getAttack). */
-export function meleeDamage(attack: number, defense: number, onFightingType = true): DamageResult {
+function meleeDamage(attack: number, defense: number, onFightingType = true): DamageResult {
   const raw = attackOutput(attack) / (onFightingType ? 1 : OFF_TYPE_PENALTY)
   const perHitActual = raw / defenseReduction(defense)
   return {
@@ -135,7 +152,7 @@ export function timeToKill(hitsToKill: number, cooldownSeconds: number): number 
   return (hitsToKill - 1) * cooldownSeconds
 }
 
-export interface FightSource {
+interface FightSource {
   label: string
   dps: number
   detail: string
@@ -164,8 +181,8 @@ export interface FightResult {
 /** Keeps a long stalemate from producing thousands of log lines. */
 const MAX_EVENTS = 120
 
-export interface FightOptions {
-  abilities: { id: string; name: string; damage?: number; cooldown?: number; duration?: number; range?: number }[]
+interface FightOptions {
+  abilities: { id: string; name: string; slot: AbilitySlot; damage?: number; cooldown?: number; duration?: number; range?: number }[]
   attack: number
   defense: number
   utility: number
@@ -207,9 +224,9 @@ export function simulateFight(o: FightOptions): FightResult {
   const reach = Math.max(0, Math.min(1, o.meleeUptime))
 
   const usable = o.abilities
-    .filter((a) => isDamagingAbility(a.name, a.damage) && a.damage !== undefined && a.cooldown && a.cooldown > 0)
+    .filter((a) => isDamagingAbility(a.slot, a.damage, a.name) && a.damage !== undefined && a.cooldown && a.cooldown > 0)
     .map((a) => {
-      const ult = isUltimate(a.name)
+      const ult = a.slot === 'ultimate'
       const hits = hitsPerUse(a.id)
       return {
         id: a.id,

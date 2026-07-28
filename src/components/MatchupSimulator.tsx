@@ -1,48 +1,14 @@
 import { useEffect, useMemo, useState } from 'react'
 
 import { abilityBalances } from '../lib/abilityStats'
-import { suits } from '../lib/suits'
-import { DEFAULT_CPS, HEALTH_DISPLAY_SCALE, RARITIES, formatDuration, simulateFight, statValue } from '../lib/combat'
+import { getSuit, releasedSuits } from '../lib/suits'
+import { DEFAULT_CPS, HEALTH_DISPLAY_SCALE, formatDuration, simulateFight, statValue } from '../lib/combat'
 import { clearPersistedState, usePersistentState } from '../lib/usePersistentState'
 import { decodeMatchup, encodeMatchup } from '../lib/shareState'
-import { formatDuration as fmt } from '../lib/combat'
-
-const selectClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
-
-function Range({
-  label,
-  value,
-  onChange,
-  min,
-  max,
-  step = 1,
-  format,
-  hint,
-}: {
-  label: string
-  value: number
-  onChange: (v: number) => void
-  min: number
-  max: number
-  step?: number
-  format?: (v: number) => string
-  hint?: string
-}) {
-  return (
-    <label className="block">
-      <span className="flex items-baseline justify-between gap-2 text-sm">
-        <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
-        <span className="font-medium tabular-nums">{format ? format(value) : value}</span>
-      </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-blue-600" />
-      {hint && <span className="text-xs text-neutral-500">{hint}</span>}
-    </label>
-  )
-}
+import { BigStat, Range, RaritySelect, SuitSelect } from './controls'
 
 export function MatchupSimulator() {
-  const pickable = useMemo(() => suits.filter((s) => !s.wip && s.stats.length > 0).sort((a, b) => a.name.localeCompare(b.name)), [])
+  const pickable = useMemo(() => releasedSuits((s) => s.stats.length > 0), [])
 
   const [attackerId, setAttackerId] = usePersistentState('atkSuit', 'superman')
   const [defenderId, setDefenderId] = usePersistentState('defSuit', 'batman')
@@ -107,12 +73,12 @@ export function MatchupSimulator() {
     )
   }
 
-  const attacker = suits.find((s) => s.id === attackerId)
-  const defender = suits.find((s) => s.id === defenderId)
+  const attacker = getSuit(attackerId)
+  const defender = getSuit(defenderId)
 
-  const attack = statValue(attacker, 'Attack', attackerIv) ?? 50
-  const defense = statValue(defender, 'Defense', defenderIv) ?? 50
-  const utility = statValue(attacker, 'Utility', attackerIv) ?? 50
+  const attack = statValue(attacker, 'attack', attackerIv) ?? 50
+  const defense = statValue(defender, 'defense', defenderIv) ?? 50
+  const utility = statValue(attacker, 'utility', attackerIv) ?? 50
 
   const result = useMemo(
     () =>
@@ -120,6 +86,7 @@ export function MatchupSimulator() {
         abilities: (attacker?.abilities ?? []).map((a) => ({
           id: a.id,
           name: a.name,
+          slot: a.slot,
           damage: abilityBalances[a.id]?.damage,
           cooldown: abilityBalances[a.id]?.cooldown,
           duration: abilityBalances[a.id]?.duration,
@@ -165,40 +132,14 @@ export function MatchupSimulator() {
       </p>
 
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
-          <span className="text-neutral-600 dark:text-neutral-400">Attacker</span>
-          <select value={attackerId} onChange={(e) => setAttackerId(e.target.value)} className={selectClass}>
-            {pickable.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <select value={attackerIv} onChange={(e) => setAttackerIv(Number(e.target.value))} className={selectClass}>
-            {RARITIES.map((r) => (
-              <option key={r.name} value={r.iv}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block text-sm">
-          <span className="text-neutral-600 dark:text-neutral-400">Defender</span>
-          <select value={defenderId} onChange={(e) => setDefenderId(e.target.value)} className={selectClass}>
-            {pickable.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <select value={defenderIv} onChange={(e) => setDefenderIv(Number(e.target.value))} className={selectClass}>
-            {RARITIES.map((r) => (
-              <option key={r.name} value={r.iv}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="space-y-2">
+          <SuitSelect label="Attacker" value={attackerId} options={pickable} onChange={setAttackerId} />
+          <RaritySelect label="Attacker rarity" iv={attackerIv} onChange={setAttackerIv} />
+        </div>
+        <div className="space-y-2">
+          <SuitSelect label="Defender" value={defenderId} options={pickable} onChange={setDefenderId} />
+          <RaritySelect label="Defender rarity" iv={defenderIv} onChange={setDefenderIv} />
+        </div>
       </div>
 
       <div className="mt-5 rounded-md bg-neutral-50 p-4 dark:bg-neutral-900/50">
@@ -279,7 +220,7 @@ export function MatchupSimulator() {
                     (e.kind === 'kill' ? 'bg-green-50 font-medium dark:bg-green-950/30' : e.kind === 'idle' ? 'bg-amber-50 dark:bg-amber-950/20' : '')
                   }
                 >
-                  <span className="w-14 shrink-0 tabular-nums text-xs text-neutral-500">{fmt(e.t)}</span>
+                  <span className="w-14 shrink-0 tabular-nums text-xs text-neutral-500">{formatDuration(e.t)}</span>
                   <span className="min-w-0 flex-1 truncate">{e.label}</span>
                   {e.damage > 0 && <span className="shrink-0 tabular-nums text-xs text-neutral-500">-{(e.damage * HEALTH_DISPLAY_SCALE).toFixed(0)}</span>}
                   <span className="w-16 shrink-0 text-right tabular-nums text-xs text-neutral-500">

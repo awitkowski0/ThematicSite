@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 
-import { Suit, suits } from '../lib/suits'
+import { Suit, getSuit, releasedSuits } from '../lib/suits'
 import { DEFAULT_BASE_DAMAGE, statsForAbility } from '../lib/abilityStats'
+import { BigStat, Field, Range, RaritySelect, SuitSelect, inputClass, selectClass } from './controls'
 import {
   HEALTH_DISPLAY_SCALE,
   MAX_SYNERGY,
@@ -13,65 +14,7 @@ import {
   statValue,
 } from '../lib/combat'
 
-const pickableSuits = () => suits.filter((s) => !s.wip && s.stats.length > 0).sort((a, b) => a.name.localeCompare(b.name))
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block text-sm">
-      <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
-      {children}
-    </label>
-  )
-}
-
-const selectClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
-const inputClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm tabular-nums outline-none focus:border-neutral-500 dark:border-neutral-700'
-
-function SuitSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
-  const options = useMemo(pickableSuits, [])
-  return (
-    <Field label={label}>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={selectClass}>
-        <option value="">Custom…</option>
-        {options.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
-      </select>
-    </Field>
-  )
-}
-
-function RaritySelect({ label, iv, onChange }: { label: string; iv: number; onChange: (v: number) => void }) {
-  return (
-    <Field label={label}>
-      <select value={iv} onChange={(e) => onChange(Number(e.target.value))} className={selectClass}>
-        {RARITIES.map((r) => (
-          <option key={r.name} value={r.iv}>
-            {r.name}
-          </option>
-        ))}
-      </select>
-    </Field>
-  )
-}
-
-/** Always editable — picking a suit seeds it, but you can still drag from there. */
-function Slider({ label, value, onChange, hint }: { label: string; value: number; onChange: (v: number) => void; hint?: string }) {
-  return (
-    <label className="block">
-      <span className="flex items-baseline justify-between text-sm">
-        <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
-        <span className="font-medium tabular-nums">{Math.round(value)}</span>
-      </span>
-      <input type="range" min={1} max={99} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-blue-600" />
-      {hint && <span className="text-xs text-neutral-500">{hint}</span>}
-    </label>
-  )
-}
+const pickableSuits = () => releasedSuits((s) => s.stats.length > 0)
 
 function AbilitySelect({ suit, value, onChange }: { suit: Suit | undefined; value: string; onChange: (id: string) => void }) {
   return (
@@ -89,6 +32,7 @@ function AbilitySelect({ suit, value, onChange }: { suit: Suit | undefined; valu
 }
 
 export function DamageCalculator() {
+  const options = useMemo(pickableSuits, [])
   const [attackerId, setAttackerId] = useState('superman')
   const [defenderId, setDefenderId] = useState('batman')
   const [attackerIv, setAttackerIv] = useState(1)
@@ -105,34 +49,33 @@ export function DamageCalculator() {
   const [utility, setUtility] = useState(50)
   const [baseCooldown, setBaseCooldown] = useState(15)
 
-  const attacker = suits.find((s) => s.id === attackerId)
-  const defender = suits.find((s) => s.id === defenderId)
-  const cooldownSuit = suits.find((s) => s.id === cooldownSuitId)
+  const attacker = getSuit(attackerId)
+  const defender = getSuit(defenderId)
+  const cooldownSuit = getSuit(cooldownSuitId)
 
   // Selecting a suit/rarity seeds the sliders; they stay editable afterwards.
   useEffect(() => {
-    const v = statValue(attacker, 'Attack', attackerIv, synergy)
+    const v = statValue(attacker, 'attack', attackerIv, synergy)
     if (v !== undefined) setAttack(v)
   }, [attacker, attackerIv, synergy])
 
   useEffect(() => {
-    const v = statValue(defender, 'Defense', defenderIv, 0)
+    const v = statValue(defender, 'defense', defenderIv, 0)
     if (v !== undefined) setDefense(v)
   }, [defender, defenderIv])
 
   useEffect(() => {
-    const v = statValue(cooldownSuit, 'Utility', cooldownIv, 0)
+    const v = statValue(cooldownSuit, 'utility', cooldownIv, 0)
     if (v !== undefined) setUtility(v)
   }, [cooldownSuit, cooldownIv])
 
   // Picking an ability seeds damage/cooldown; both remain overridable.
   const abilityStats = abilityId ? statsForAbility(abilityId) : undefined
   useEffect(() => {
-    if (!abilityId) return
-    const s = statsForAbility(abilityId)
-    setBaseDamage(s.damage)
-    setBaseCooldown(s.cooldown)
-  }, [abilityId])
+    if (!abilityStats) return
+    setBaseDamage(abilityStats.damage)
+    setBaseCooldown(abilityStats.cooldown)
+  }, [abilityId, abilityStats])
 
   // Clear the ability if it isn't on the newly-picked attacker.
   useEffect(() => {
@@ -154,14 +97,14 @@ export function DamageCalculator() {
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="space-y-3">
-            <SuitSelect label="Attacker" value={attackerId} onChange={setAttackerId} />
+            <SuitSelect label="Attacker" value={attackerId} options={options} onChange={setAttackerId} allowCustom />
             <RaritySelect label="Attacker rarity" iv={attackerIv} onChange={setAttackerIv} />
-            <Slider label="Attack" value={attack} onChange={setAttack} hint={attacker ? `${attacker.name}'s roll, adjustable` : undefined} />
+            <Range min={1} max={99} label="Attack" value={attack} onChange={setAttack} hint={attacker ? `${attacker.name}'s roll, adjustable` : undefined} />
           </div>
           <div className="space-y-3">
-            <SuitSelect label="Defender" value={defenderId} onChange={setDefenderId} />
+            <SuitSelect label="Defender" value={defenderId} options={options} onChange={setDefenderId} allowCustom />
             <RaritySelect label="Defender rarity" iv={defenderIv} onChange={setDefenderIv} />
-            <Slider label="Defense" value={defense} onChange={setDefense} hint={defender ? `${defender.name}'s roll, adjustable` : undefined} />
+            <Range min={1} max={99} label="Defense" value={defense} onChange={setDefense} hint={defender ? `${defender.name}'s roll, adjustable` : undefined} />
           </div>
         </div>
 
@@ -219,12 +162,12 @@ export function DamageCalculator() {
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">How long you actually wait between uses, after Utility.</p>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <SuitSelect label="Suit" value={cooldownSuitId} onChange={setCooldownSuitId} />
+          <SuitSelect label="Suit" value={cooldownSuitId} options={options} onChange={setCooldownSuitId} allowCustom />
           <RaritySelect label="Rarity" iv={cooldownIv} onChange={setCooldownIv} />
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <Slider label="Utility" value={utility} onChange={setUtility} hint={cooldownSuit ? `${cooldownSuit.name}'s roll, adjustable` : undefined} />
+          <Range min={1} max={99} label="Utility" value={utility} onChange={setUtility} hint={cooldownSuit ? `${cooldownSuit.name}'s roll, adjustable` : undefined} />
           <Field label="Base cooldown (seconds)">
             <input type="number" min={0} value={baseCooldown} onChange={(e) => setBaseCooldown(Math.max(0, Number(e.target.value)))} className={inputClass} />
           </Field>

@@ -1,6 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
+import { cardLinkClass } from '../../components/controls'
+
 import { blogPosts } from '../../lib/blog'
+import { formatDate } from '../../lib/format'
 
 export const Route = createFileRoute('/blog/')({
   head: () => ({
@@ -8,10 +11,6 @@ export const Route = createFileRoute('/blog/')({
   }),
   component: BlogIndex,
 })
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
 
 function BlogIndex() {
   return (
@@ -25,7 +24,7 @@ function BlogIndex() {
             <Link
               to="/blog/$version"
               params={{ version: post.version }}
-              className="block rounded-md border border-neutral-200 p-4 hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+              className={cardLinkClass}
             >
               <div className="flex items-baseline justify-between gap-4">
                 <span className="font-semibold">{post.version}</span>

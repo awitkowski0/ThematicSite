@@ -52,20 +52,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             <Link to="/abilities" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
               Abilities
             </Link>
-            <Link to="/matchup" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
-              Matchup
-            </Link>
-            <Link to="/mechanics/stats" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
-              Stats
-            </Link>
             <Link to="/book" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
               Guidebook
-            </Link>
-            <Link to="/mechanics" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
-              Mechanics
-            </Link>
-            <Link to="/blog" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
-              Changelog
             </Link>
             <Link to="/faq" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
               FAQ

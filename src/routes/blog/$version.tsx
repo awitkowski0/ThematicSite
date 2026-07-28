@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 
 import { formatChangelogMarkdown, getBlogPost } from '../../lib/blog'
+import { formatDate } from '../../lib/format'
 import { MarkdownContent } from '../../components/MarkdownContent'
 
 export const Route = createFileRoute('/blog/$version')({
@@ -22,10 +23,6 @@ export const Route = createFileRoute('/blog/$version')({
     </div>
   ),
 })
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-}
 
 function BlogPostPage() {
   const post = Route.useLoaderData()

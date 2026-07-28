@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 
-import { accentForCollection, getSuit } from '../../lib/suits'
+import { accentForCollection, getSuit, variantsOf } from '../../lib/suits'
 import { RecipeTree } from '../../components/RecipeTree'
 
 export const Route = createFileRoute('/suits/$id')({
@@ -37,6 +37,8 @@ export const Route = createFileRoute('/suits/$id')({
 
 function SuitDetail() {
   const suit = Route.useLoaderData()
+  const variants = variantsOf(suit.id)
+  const base = suit.parent ? getSuit(suit.parent) : undefined
 
   return (
     <div>
@@ -112,9 +114,51 @@ function SuitDetail() {
         </section>
       )}
 
+      {base && (
+        <p className="mt-6 rounded-md bg-neutral-50 p-3 text-sm dark:bg-neutral-900/50">
+          A version of{' '}
+          <Link to="/suits/$id" params={{ id: base.id }} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+            {base.name}
+          </Link>
+          . Crafting it needs a full {base.name} as well as its own ingredients — which also means two shiny rolls.
+        </p>
+      )}
+
+      {variants.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Other versions</h2>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+            {variants.length} suit{variants.length === 1 ? '' : 's'} built from {suit.name}. Each one costs a full {suit.name} on top of its own recipe.
+          </p>
+          <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {variants.map((v) => (
+              <li key={v.id}>
+                <Link
+                  to="/suits/$id"
+                  params={{ id: v.id }}
+                  className="flex items-center gap-2 rounded-md border border-neutral-200 p-2 text-sm hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+                >
+                  <span className="h-6 w-1 shrink-0 rounded-full" style={{ backgroundColor: accentForCollection(v.collection) }} />
+                  <span className="min-w-0 flex-1 truncate">{v.name}</span>
+                  {v.wip && <span className="shrink-0 text-[10px] font-medium text-amber-700 dark:text-amber-500">WIP</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {suit.recipe && suit.recipe.length > 0 && (
         <section className="mt-8">
-          <h2 className="text-lg font-semibold">Suit Bench recipe</h2>
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-lg font-semibold">Suit Bench recipe</h2>
+            <a
+              href={`/planner?s=${suit.id}&q=30&x=1`}
+              className="rounded-md border border-neutral-300 px-2.5 py-1 text-xs font-medium hover:border-neutral-500 dark:border-neutral-700 dark:hover:border-neutral-500"
+            >
+              Shiny grinding? Plan a batch →
+            </a>
+          </div>
           <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">Click any ingredient to see how to craft it.</p>
           <div className="mt-3">
             <RecipeTree ingredients={suit.recipe} />

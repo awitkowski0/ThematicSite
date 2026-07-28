@@ -2,9 +2,13 @@ import suitsData from '../data/suits.generated.json'
 import collectionsData from '../data/collections.generated.json'
 import recipeGraphData from '../data/recipes.generated.json'
 
+export type AbilitySlot = 'active' | 'ultimate' | 'passive' | 'equip' | 'cosmetic' | 'utility' | 'unknown'
+
 export interface SuitAbility {
   id: string
   name: string
+  /** From the ability's keybind in the mod's data — not parsed from the display name. */
+  slot: AbilitySlot
   description?: string
 }
 
@@ -47,6 +51,8 @@ export interface Suit {
   collectionName: string
   tier: number
   wip: boolean
+  /** Base suit this is an alt of — crafting an alt also consumes one of these. */
+  parent?: string
   stats: SuitStat[]
   abilities: SuitAbility[]
   recipe?: RecipeIngredient[]
@@ -84,11 +90,57 @@ export function accentForCollection(collectionId: string): string {
   return `hsl(${hue} 55% 55%)`
 }
 
-export function suitsByCollection(): { collection: CollectionMeta; suits: Suit[] }[] {
+// Starter suits are the tutorial-ish ones you're given rather than chase, so they sit at
+// the end regardless of the collection ordering the mod declares.
+const LAST_COLLECTIONS = new Set(['starters'])
+
+export interface SuitFamily {
+  /** The character — a suit with no parent. */
+  base: Suit
+  /** Every alt built from it, name-sorted. */
+  variants: Suit[]
+}
+
+/** Groups alts under the character they're built from, so 529 suits read as 103 characters. */
+export function familiesByCollection(): { collection: CollectionMeta; families: SuitFamily[] }[] {
+  const variantsByParent = new Map<string, Suit[]>()
+  for (const suit of suits) {
+    if (!suit.parent) continue
+    const list = variantsByParent.get(suit.parent) ?? []
+    list.push(suit)
+    variantsByParent.set(suit.parent, list)
+  }
+
   return collections
+    .slice()
+    .sort((a, b) => {
+      const aLast = LAST_COLLECTIONS.has(a.id) ? 1 : 0
+      const bLast = LAST_COLLECTIONS.has(b.id) ? 1 : 0
+      return aLast - bLast || a.importance - b.importance || a.name.localeCompare(b.name)
+    })
     .map((collection) => ({
       collection,
-      suits: suits.filter((s) => s.collection === collection.id).sort((a, b) => a.name.localeCompare(b.name)),
+      families: suits
+        .filter((s) => s.collection === collection.id && !s.parent)
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map((base) => ({
+          base,
+          variants: (variantsByParent.get(base.id) ?? []).sort((a, b) => a.name.localeCompare(b.name)),
+        })),
     }))
-    .filter((group) => group.suits.length > 0)
+    .filter((group) => group.families.length > 0)
+}
+
+export function variantsOf(suitId: string): Suit[] {
+  return suits.filter((s) => s.parent === suitId).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Released suits (WIP hidden), name-sorted — the default view everywhere. */
+export function releasedSuits(extra?: (s: Suit) => boolean): Suit[] {
+  return suits.filter((s) => !s.wip && (!extra || extra(s))).sort((a, b) => a.name.localeCompare(b.name))
+}
+
+/** Released base characters only, i.e. excluding alts. */
+export function characters(): Suit[] {
+  return releasedSuits((s) => !s.parent)
 }

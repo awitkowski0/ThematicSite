@@ -2,11 +2,8 @@ import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 
 import { RecipeIngredient, getRecipeNode } from '../lib/suits'
-
-function stripNamespace(id: string): string {
-  const idx = id.indexOf(':')
-  return idx === -1 ? id : id.slice(idx + 1)
-}
+import { stripNamespace } from '../lib/format'
+import { ItemIcon } from './controls'
 
 export function RecipeTree({ ingredients, ancestors = [] }: { ingredients: RecipeIngredient[]; ancestors?: string[] }) {
   return (
@@ -24,11 +21,7 @@ function IngredientRow({ ingredient, ancestors }: { ingredient: RecipeIngredient
   const node = !ingredient.isSuit && !isCircular ? getRecipeNode(ingredient.id) : undefined
   const expandable = Boolean(node)
 
-  const icon = ingredient.iconPath ? (
-    <img src={ingredient.iconPath} alt="" className="h-6 w-6 shrink-0" />
-  ) : (
-    <span className="h-6 w-6 shrink-0 rounded bg-neutral-100 dark:bg-neutral-900" />
-  )
+  const icon = <ItemIcon path={ingredient.iconPath} />
 
   const label = (
     <span>

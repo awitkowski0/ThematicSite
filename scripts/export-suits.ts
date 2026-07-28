@@ -56,7 +56,26 @@ function loadCollections(): Map<string, CollectionMeta> {
 
 interface RawAbility {
   identifier: string
+  keybind: string
   remove: boolean
+}
+
+/**
+ * What kind of ability this is, from its keybind — the mod's own authoritative signal.
+ * Display names carry a "[PASSIVE]"-style prefix too, but that's presentation and doesn't
+ * cover every case (e.g. "[VEHICLE]" exists), so key off the data instead.
+ */
+export type AbilitySlot = 'active' | 'ultimate' | 'passive' | 'equip' | 'cosmetic' | 'utility' | 'unknown'
+
+function slotFromKeybind(keybind: string): AbilitySlot {
+  const key = keybind.replace('key.thematic.', '')
+  if (key.startsWith('ability_')) return 'active'
+  if (key === 'ultimate') return 'ultimate'
+  if (key === 'passive') return 'passive'
+  if (key === 'equip_item') return 'equip'
+  if (key === 'cosmetic') return 'cosmetic'
+  if (key === 'utility') return 'utility'
+  return 'unknown'
 }
 
 interface RawStat {
@@ -101,7 +120,7 @@ function loadRawArmors(): Map<string, RawArmor> {
     for (const file of walkJsonFiles(path.join(ARMORS_DIR, collection))) {
       const id = path.basename(file, '.json')
       const raw = readJson<{
-        abilities?: { identifier: string; remove?: boolean }[]
+        abilities?: { identifier: string; keybind?: string; remove?: boolean }[]
         stats?: { identifier: string; minimum?: number; maximum?: number }[]
         tier?: number
         'suit-recipe'?: string
@@ -117,7 +136,7 @@ function loadRawArmors(): Map<string, RawArmor> {
       map.set(id, {
         id,
         collection,
-        abilities: (raw.abilities ?? []).map((a) => ({ identifier: a.identifier, remove: a.remove ?? false })),
+        abilities: (raw.abilities ?? []).map((a) => ({ identifier: a.identifier, keybind: a.keybind ?? 'default', remove: a.remove ?? false })),
         stats: (raw.stats ?? []).map((s) => ({ identifier: s.identifier, minimum: s.minimum ?? 0, maximum: s.maximum ?? 0 })),
         tier: raw.tier ?? DEFAULT_TIER,
         recipe: raw['suit-recipe'] ?? DEFAULT_RECIPE,
@@ -133,7 +152,7 @@ function loadRawArmors(): Map<string, RawArmor> {
 interface MergedArmor {
   id: string
   collection: string
-  abilities: string[] // deduped, ordered ability identifiers after add/replace/remove
+  abilities: { id: string; keybind: string }[] // deduped and ordered after add/replace/remove
   stats: RawStat[]
   tier: number
   recipe: string
@@ -157,7 +176,7 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
     const merged: MergedArmor = {
       id,
       collection: self.collection,
-      abilities: self.abilities.filter((a) => !a.remove).map((a) => a.identifier),
+      abilities: self.abilities.filter((a) => !a.remove).map((a) => ({ id: a.identifier, keybind: a.keybind })),
       stats: self.stats,
       tier: self.tier,
       recipe: self.recipe,
@@ -172,13 +191,9 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
 
   const abilities = [...parentMerged.abilities]
   for (const ability of self.abilities) {
-    const existingIndex = abilities.indexOf(ability.identifier)
-    if (ability.remove) {
-      if (existingIndex !== -1) abilities.splice(existingIndex, 1)
-    } else {
-      if (existingIndex !== -1) abilities.splice(existingIndex, 1)
-      abilities.push(ability.identifier)
-    }
+    const existingIndex = abilities.findIndex((a) => a.id === ability.identifier)
+    if (existingIndex !== -1) abilities.splice(existingIndex, 1)
+    if (!ability.remove) abilities.push({ id: ability.identifier, keybind: ability.keybind })
   }
 
   // Same rule ArmorCodec.mergeWithParent uses for stats: start from the parent's, then let
@@ -358,8 +373,10 @@ export function exportSuits() {
     collectionName: string
     tier: number
     wip: boolean
+    /** Base suit this is an alt of, if any — crafting an alt also consumes the base. */
+    parent?: string
     stats: { id: string; label: string; minimum: number; maximum: number }[]
-    abilities: { id: string; name: string; description?: string }[]
+    abilities: { id: string; name: string; slot: AbilitySlot; description?: string }[]
     recipe?: RecipeIngredient[]
     texturePath?: string
     shinyTexturePath?: string
@@ -389,13 +406,15 @@ export function exportSuits() {
       collectionName: collectionMeta?.name ?? titleCase(merged.collection),
       tier: merged.tier,
       wip: merged.wip,
+      ...(rawArmors.get(id)?.parent ? { parent: rawArmors.get(id)!.parent! } : {}),
       stats: DISPLAY_STATS.flatMap(({ id: statId, label }) => {
         const stat = merged.stats.find((s) => s.identifier === statId)
         return stat ? [{ id: statId, label, minimum: stat.minimum, maximum: stat.maximum }] : []
       }),
-      abilities: merged.abilities.map((abilityId) => ({
+      abilities: merged.abilities.map(({ id: abilityId, keybind }) => ({
         id: abilityId,
         name: abilityInfo.get(abilityId)?.name ?? titleCase(abilityId),
+        slot: slotFromKeybind(keybind),
         description: abilityInfo.get(abilityId)?.description,
       })),
       recipe: resolveTopRecipe(merged.recipe, releasedSuitIds),
@@ -434,7 +453,17 @@ export function exportSuits() {
   const releasedCollectionCount = collectionsOut.filter((c) => suits.some((s) => s.collection === c.id && !s.wip)).length
   fs.writeFileSync(
     path.join(OUT_DATA_DIR, 'stats.generated.json'),
-    JSON.stringify({ suitCount: releasedCount, collectionCount: releasedCollectionCount, generatedAt: new Date().toISOString() }, null, 2),
+    JSON.stringify(
+      {
+        suitCount: releasedCount,
+        // Base characters only — alts are versions of these, and 529 overstates the roster.
+        characterCount: suits.filter((s) => !s.wip && !s.parent).length,
+        collectionCount: releasedCollectionCount,
+        generatedAt: new Date().toISOString(),
+      },
+      null,
+      2,
+    ),
   )
 
   console.log(`[export-suits] wrote ${suits.length} suits (${releasedCount} released, ${suits.length - releasedCount} WIP) across ${collectionsOut.length} collections`)

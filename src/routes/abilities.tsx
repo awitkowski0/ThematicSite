@@ -2,8 +2,9 @@ import { useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { abilityBalances } from '../lib/abilityStats'
-import { suits } from '../lib/suits'
-import { RARITIES, abilityDamage, actualCooldown, formatDuration, hitsPerUse, isDamagingAbility, isUltimate, statValue, timeToKill } from '../lib/combat'
+import { AbilitySlot, getSuit, releasedSuits } from '../lib/suits'
+import { RaritySelect, SuitSelect } from '../components/controls'
+import { abilityDamage, actualCooldown, formatDuration, hitsPerUse, isDamagingAbility, statValue, timeToKill } from '../lib/combat'
 
 export const Route = createFileRoute('/abilities')({
   head: () => ({
@@ -23,7 +24,11 @@ interface Row {
   cooldown?: number
   duration?: number
   range?: number
+  slot: AbilitySlot
+  /** Every released suit with this ability. */
   suitNames: string[]
+  /** Just the base characters, ignoring alts — usually the more useful count. */
+  characterNames: string[]
   /** Typical Attack of the suits that actually carry this ability. */
   typicalAttack?: number
 }
@@ -31,18 +36,23 @@ interface Row {
 function buildRows(): Row[] {
   // Ability display names/descriptions come from the guidebook (via suits), balance numbers
   // from the team's sheet — join them on the ability id.
-  const meta = new Map<string, { name: string; description?: string }>()
+  const meta = new Map<string, { name: string; slot: AbilitySlot; description?: string }>()
   const usedBy = new Map<string, string[]>()
+  const usedByCharacter = new Map<string, string[]>()
   const attacks = new Map<string, number[]>()
 
-  for (const suit of suits) {
-    if (suit.wip) continue
-    const suitAttack = suit.stats.find((s) => s.label === 'Attack')?.minimum
+  for (const suit of releasedSuits()) {
+    const suitAttack = statValue(suit, 'attack', 0)
     for (const ability of suit.abilities) {
-      if (!meta.has(ability.id)) meta.set(ability.id, { name: ability.name, description: ability.description })
+      if (!meta.has(ability.id)) meta.set(ability.id, { name: ability.name, slot: ability.slot, description: ability.description })
       const list = usedBy.get(ability.id) ?? []
       list.push(suit.name)
       usedBy.set(ability.id, list)
+      if (!suit.parent) {
+        const chars = usedByCharacter.get(ability.id) ?? []
+        chars.push(suit.name)
+        usedByCharacter.set(ability.id, chars)
+      }
       if (suitAttack !== undefined) {
         const arr = attacks.get(ability.id) ?? []
         arr.push(suitAttack)
@@ -58,12 +68,14 @@ function buildRows(): Row[] {
       return {
         id,
         name: m.name,
+        slot: m.slot,
         description: m.description,
         damage: balance?.damage,
         cooldown: balance?.cooldown,
         duration: balance?.duration,
         range: balance?.range,
         suitNames: usedBy.get(id) ?? [],
+        characterNames: usedByCharacter.get(id) ?? [],
         typicalAttack: atk?.length ? Math.round(atk.reduce((a, b) => a + b, 0) / atk.length) : undefined,
       }
     })
@@ -80,29 +92,28 @@ function Num({ value, suffix }: { value?: number; suffix?: string }) {
   )
 }
 
-const selectClass =
-  'mt-1 rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
-
 function AbilitiesPage() {
   const rows = useMemo(buildRows, [])
-  const defenders = useMemo(() => suits.filter((s) => !s.wip && s.stats.some((st) => st.label === 'Defense')).sort((a, b) => a.name.localeCompare(b.name)), [])
+  const defenders = useMemo(() => releasedSuits((s) => statValue(s, 'defense', 0) !== undefined), [])
 
   const [query, setQuery] = useState('')
   const [damageOnly, setDamageOnly] = useState(false)
+  const [ignoreAlts, setIgnoreAlts] = useState(true)
   const [defenderId, setDefenderId] = useState('batman')
   const [defenderIv, setDefenderIv] = useState(1)
 
-  const defender = suits.find((s) => s.id === defenderId)
-  const defense = statValue(defender, 'Defense', defenderIv) ?? 60
+  const defender = getSuit(defenderId)
+  const defense = statValue(defender, 'defense', defenderIv) ?? 70
   // Utility only shifts cooldowns a little; use a mid roll so TTK is representative
   // rather than best- or worst-case.
   const assumedUtility = 50
 
   const normalized = query.trim().toLowerCase()
   const filtered = rows.filter((r) => {
-    if (damageOnly && !isDamagingAbility(r.name, r.damage)) return false
+    if (damageOnly && !isDamagingAbility(r.slot, r.damage, r.name)) return false
     if (!normalized) return true
-    return r.name.toLowerCase().includes(normalized) || r.suitNames.some((s) => s.toLowerCase().includes(normalized))
+    const names = ignoreAlts ? r.characterNames : r.suitNames
+    return r.name.toLowerCase().includes(normalized) || names.some((s) => s.toLowerCase().includes(normalized))
   })
 
   return (
@@ -131,30 +142,22 @@ function AbilitiesPage() {
             className="mt-1 block w-56 rounded-md border border-neutral-300 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700"
           />
         </label>
-        <label className="block">
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">Damage against</span>
-          <select value={defenderId} onChange={(e) => setDefenderId(e.target.value)} className={`${selectClass} block w-48`}>
-            {defenders.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">Their rarity</span>
-          <select value={defenderIv} onChange={(e) => setDefenderIv(Number(e.target.value))} className={`${selectClass} block w-36`}>
-            {RARITIES.map((r) => (
-              <option key={r.name} value={r.iv}>
-                {r.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 pb-2 text-sm text-neutral-600 dark:text-neutral-400">
-          <input type="checkbox" checked={damageOnly} onChange={(e) => setDamageOnly(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
-          Only ones that deal damage
-        </label>
+        <div className="w-48">
+          <SuitSelect label="Damage against" value={defenderId} options={defenders} onChange={setDefenderId} />
+        </div>
+        <div className="w-36">
+          <RaritySelect label="Their rarity" iv={defenderIv} onChange={setDefenderIv} />
+        </div>
+        <div className="flex flex-col gap-1 pb-1">
+          <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <input type="checkbox" checked={damageOnly} onChange={(e) => setDamageOnly(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
+            Only ones that deal damage
+          </label>
+          <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+            <input type="checkbox" checked={ignoreAlts} onChange={(e) => setIgnoreAlts(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
+            Count characters, not alts
+          </label>
+        </div>
       </div>
 
       <p className="mt-3 text-sm text-neutral-500">
@@ -178,17 +181,24 @@ function AbilitiesPage() {
           <tbody>
             {filtered.map((row) => {
               const hits = hitsPerUse(row.id)
-              const result = row.damage !== undefined ? abilityDamage(row.damage, defense, hits) : undefined
-              const cd = row.cooldown !== undefined ? actualCooldown(row.cooldown, assumedUtility, isUltimate(row.name)) : undefined
+              const result = isDamagingAbility(row.slot, row.damage, row.name) ? abilityDamage(row.damage!, defense, hits) : undefined
+              const cd = row.cooldown !== undefined ? actualCooldown(row.cooldown, assumedUtility, row.slot === 'ultimate') : undefined
               const ttk = result && cd !== undefined ? timeToKill(result.hitsToKill, cd) : undefined
               return (
                 <tr key={row.id} className="border-b border-neutral-100 align-top dark:border-neutral-900">
                   <td className="py-3 pr-4">
                     <div className="font-medium">{row.name}</div>
                     {row.description && <div className="mt-0.5 max-w-prose text-xs text-neutral-600 dark:text-neutral-400">{row.description}</div>}
-                    {row.suitNames.length > 0 && (
-                      <div className="mt-1 text-xs text-neutral-500">{row.suitNames.length === 1 ? row.suitNames[0] : `${row.suitNames.length} suits`}</div>
-                    )}
+                    {(() => {
+                      const names = ignoreAlts ? row.characterNames : row.suitNames
+                      if (names.length === 0) return null
+                      const noun = ignoreAlts ? 'character' : 'suit'
+                      return (
+                        <div className="mt-1 text-xs text-neutral-500" title={names.slice(0, 30).join(', ')}>
+                          {names.length === 1 ? names[0] : `${names.length} ${noun}s`}
+                        </div>
+                      )
+                    })()}
                   </td>
                   <td className="py-3 pr-4">
                     <Num value={row.damage} />

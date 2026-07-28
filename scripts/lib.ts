@@ -16,7 +16,6 @@ export const PATCHOULI_DIR = path.join(ASSETS_DIR, 'patchouli_books/thematic/en_
 export const COLLECTIONS_DIR = path.join(DATA_DIR, 'collections')
 export const ARMORS_DIR = path.join(DATA_DIR, 'armors')
 export const RECIPES_DIR = path.join(DATA_DIR, 'recipes')
-export const WORLDGEN_DIR = path.join(DATA_DIR, 'worldgen')
 export const PATCHOULI_CATEGORIES_DIR = path.join(PATCHOULI_DIR, 'categories')
 export const PATCHOULI_ENTRIES_DIR = path.join(PATCHOULI_DIR, 'entries')
 export const PATCHOULI_SUITS_DIR = path.join(PATCHOULI_ENTRIES_DIR, 'suits')
@@ -105,7 +104,17 @@ export function copyIfExists(src: string, dest: string): boolean {
 // Resolves an icon for a thematic-namespaced item: its own item texture, then its block
 // texture (many thematic items are blocks, which is not a bug), then nothing (caller falls
 // back to a generic placeholder). Copies whichever file it finds into public/suits/items/.
+const thematicIconCache = new Map<string, string | undefined>()
+
 export function resolveThematicIcon(itemId: string): string | undefined {
+  const cached = thematicIconCache.get(itemId)
+  if (cached !== undefined || thematicIconCache.has(itemId)) return cached
+  const resolved = resolveThematicIconUncached(itemId)
+  thematicIconCache.set(itemId, resolved)
+  return resolved
+}
+
+function resolveThematicIconUncached(itemId: string): string | undefined {
   const itemSrc = path.join(ITEM_TEXTURES_DIR, `${itemId}.png`)
   const blockSrc = path.join(BLOCK_TEXTURES_DIR, `${itemId}.png`)
   const dest = path.join(OUT_ITEMS_DIR, `${itemId}.png`)
@@ -115,7 +124,17 @@ export function resolveThematicIcon(itemId: string): string | undefined {
 }
 
 // See VANILLA_ICONS_ITEMS_DIR/VANILLA_ICONS_BLOCKS_DIR above — exact-name match only.
+const vanillaIconCache = new Map<string, string | undefined>()
+
 export function resolveVanillaIcon(itemId: string): string | undefined {
+  const cached = vanillaIconCache.get(itemId)
+  if (cached !== undefined || vanillaIconCache.has(itemId)) return cached
+  const resolved = resolveVanillaIconUncached(itemId)
+  vanillaIconCache.set(itemId, resolved)
+  return resolved
+}
+
+function resolveVanillaIconUncached(itemId: string): string | undefined {
   const dest = path.join(OUT_VANILLA_ITEMS_DIR, `${itemId}.png`)
   if (copyIfExists(path.join(VANILLA_ICONS_ITEMS_DIR, `${itemId}.png`), dest)) return `/suits/items/vanilla/${itemId}.png`
   if (copyIfExists(path.join(VANILLA_ICONS_BLOCKS_DIR, `${itemId}.png`), dest)) return `/suits/items/vanilla/${itemId}.png`

@@ -16,18 +16,13 @@ interface AbilityData {
   projectiles: Record<string, AbilityBalance>
 }
 
-const { abilities, projectiles } = data as AbilityData
+const { abilities } = data as AbilityData
 
 // What the mod falls back to when nothing supplies a value (ThematicAbility.damage()).
 export const DEFAULT_BASE_DAMAGE = 5
 export const DEFAULT_BASE_COOLDOWN = 5
 
 export const abilityBalances = abilities
-export const projectileBalances = projectiles
-
-export function balanceFor(abilityId: string): AbilityBalance | undefined {
-  return abilities[abilityId]
-}
 
 export function statsForAbility(abilityId: string): { damage: number; cooldown: number; known: boolean } {
   const entry = abilities[abilityId]
