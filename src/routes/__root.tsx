@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Outlet, createRootRoute, HeadContent, Scripts, Link } from '@tanstack/react-router'
+import { Analytics } from '@vercel/analytics/react'
 
 import appCss from '../styles.css?url'
 
@@ -71,6 +72,7 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
           Thematic is an unofficial fan project, not affiliated with or endorsed by Mojang, Microsoft, DC, Marvel, Amazon, Skybound, or any other rights
           holder. All characters and trademarks belong to their respective owners. Not an official Minecraft product.
         </footer>
+        <Analytics />
         <Scripts />
       </body>
     </html>
