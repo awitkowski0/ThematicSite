@@ -8,6 +8,8 @@ import { RECIPES_DIR, readJson, walkJsonFiles, stripNamespace } from './lib'
 interface RawIngredientRef {
   item?: string
   id?: string
+  /** Vanilla item tags, e.g. `{"tag": "thematic:charred_logs"}` — an "any of these" slot. */
+  tag?: string
   Count?: number
   count?: number
 }
@@ -40,6 +42,9 @@ export interface RecipeIndexEntry {
 function refId(ref: RawIngredientEntry | undefined): string | undefined {
   if (!ref) return undefined
   const single = Array.isArray(ref) ? ref[0] : ref
+  // A tag slot accepts any item in that tag; surface it as `#tag` so the site can say
+  // "any charred log" rather than dropping the ingredient entirely.
+  if (single?.tag) return `#${single.tag}`
   return single?.item ?? single?.id
 }
 

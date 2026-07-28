@@ -26,12 +26,20 @@ import { isVanilla, stripNamespace as stripNs } from './format'
 
 /**
  * Ore lookup is by name match rather than a hard id link: the mined block is
- * `thematic:titanium_ore` while the crafting ingredient is `thematic:titanium_ingot`, so we
- * match on the material stem the worldgen export already derives.
+ * `thematic:titanium_ore` while the crafting ingredient is `thematic:titanium_ingot` or
+ * `thematic:raw_titanium`, so match on the material stem the worldgen export derives.
+ *
+ * Matching is on word boundaries, not a bare `startsWith`: plain prefix matching made
+ * `starro` look like `star`-anything and produced confident nonsense.
  */
 function oreSourceFor(itemId: string): MaterialSource | undefined {
-  const bare = stripNs(itemId)
-  const match = ores.find((o) => bare.startsWith(o.material) || o.blockNames.some((b) => stripNs(b) === bare))
+  // `raw_titanium` and `titanium_ingot` both describe the titanium ore.
+  const bare = stripNs(itemId).replace(/^raw_/, '')
+  const match = ores.find((o) => {
+    if (o.blockNames.some((b) => stripNs(b) === bare)) return true
+    const stem = o.material
+    return bare === stem || bare.startsWith(`${stem}_`) || bare.endsWith(`_${stem}`)
+  })
   if (!match?.yLevel) return undefined
   const freq = match.veinsPerChunk ? `, ~${match.veinsPerChunk} veins/chunk` : ''
   return { kind: 'ore', detail: `Mine Y ${match.yLevel.min} to ${match.yLevel.max}${freq}` }
@@ -42,14 +50,35 @@ function oreSourceFor(itemId: string): MaterialSource | undefined {
 // that no data file captures. Keyed without namespace so it covers both minecraft: and
 // thematic: ids.
 const KNOWN_SOURCES: Record<string, MaterialSource> = {
-  alien_blood_splatter: { kind: 'structure', detail: 'Inside Spaceship structures (Badlands and Desert)' },
-  alien_blood_vial: { kind: 'structure', detail: 'Centrifuge an Empty Vial with Alien Blood Splatter from a Spaceship' },
+  // --- mob drops (guidebook: Mobs) ---
+  mutant_gene: { kind: 'mob', detail: 'Drops from Sentinels, which spawn at Abandoned Streets (Plains)' },
+  technology: { kind: 'mob', detail: 'Drops from Sentinels (1-3), at Abandoned Streets' },
+  advanced_technology: { kind: 'mob', detail: 'Drops from Sentinels (1-2), at Abandoned Streets' },
+  willpower_shard: { kind: 'mob', detail: 'Drops from Manhunters (1-3), which spawn at Spaceships' },
+  fear_shard: { kind: 'mob', detail: 'Drops from Villagers after they turn into Zombie Villagers' },
+  fear_battery: { kind: 'mob', detail: 'Dropped by the Wave Spawner after beating Arkillo at his Arena' },
   blood: { kind: 'mob', detail: 'Drops from Goats (75%), Villagers (50%), Cows/Pigs/Sheep (15%)' },
+  electrolytic_solution: { kind: 'mob', detail: 'Trade Cosmic Debris, Kryptonite, Alien Tech, Netherite or Skeleton Skulls to a S.T.A.R. Labs Scientist' },
+  lightning_shard: { kind: 'mob', detail: 'Trade with Old Man Flash in the Speedforce' },
+
+  // --- structures (guidebook: Structures) ---
+  alien_blood_splatter: { kind: 'structure', detail: 'Inside Spaceship structures (Badlands and Desert)' },
   cosmic_debris: { kind: 'structure', detail: 'Inside the Meteor structure (Plains)' },
   ooze: { kind: 'structure', detail: 'Ooze Pools, Y 60-200' },
-  ooze_canister: { kind: 'structure', detail: 'Fill at an Ooze Pool (Y 60-200) or Ooze Truck' },
-  electrolytic_solution: { kind: 'mob', detail: 'Trade with a S.T.A.R. Labs Scientist' },
+  ooze_canister: { kind: 'structure', detail: 'Fill an empty canister at an Ooze Pool (Y 60-200) or Ooze Truck' },
+  filled_ooze_canister: { kind: 'structure', detail: 'Fill an empty canister at an Ooze Pool (Y 60-200) or Ooze Truck' },
+  soul: { kind: 'structure', detail: 'Brush Suspicious Soul Soil in Soul Sand Valley Ruins (Nether)' },
+  starro: { kind: 'structure', detail: 'Ocean floor in Deep Ocean, Deep Frozen, Deep Lukewarm and Deep Cold Oceans' },
   starro_clone: { kind: 'structure', detail: 'Ocean floor in Deep Ocean biomes' },
+  ancient_relic: { kind: 'structure', detail: 'Desert Temples, Shipwrecks, Ruined Portals, Bastions and Jungle Temples' },
+  engraved_lodestone: { kind: 'structure', detail: "Right-click Shazam's Throne in the Rock of Eternity (Lush Caves)" },
+
+  // --- made at a machine, not a crafting table ---
+  alien_blood_vial: { kind: 'crafted', detail: 'Centrifuge an Empty Vial with Alien Blood Splatter' },
+  blood_vial: { kind: 'crafted', detail: 'Centrifuge an Empty Vial with Blood' },
+
+  // --- fishing / misc ---
+  lobster_thermidor: { kind: 'unknown', detail: 'Caught by fishing' },
 
   // Common vanilla materials — worth spelling out since a plan can call for hundreds.
   iron_ingot: { kind: 'vanilla', detail: 'Smelt iron ore — most common around Y 16, and Y 232 in mountains' },
@@ -75,9 +104,30 @@ const KNOWN_SOURCES: Record<string, MaterialSource> = {
   green_dye: { kind: 'vanilla', detail: 'Smelt cactus' },
   black_dye: { kind: 'vanilla', detail: 'Ink sacs from squid, or wither roses' },
   white_dye: { kind: 'vanilla', detail: 'Bone meal from bones' },
+  copper_ingot: { kind: 'vanilla', detail: 'Smelt copper ore — Y -16 to 112, peaks around Y 48' },
+  emerald: { kind: 'vanilla', detail: 'Mountain biomes only, Y -16 to 320' },
+  emerald_block: { kind: 'vanilla', detail: '9 emeralds each — mountains only' },
+  lapis_lazuli: { kind: 'vanilla', detail: 'Y -64 to 64, best around Y 0' },
+  obsidian: { kind: 'vanilla', detail: 'Water onto lava, or lava pools at the bottom of caves' },
+  blaze_rod: { kind: 'vanilla', detail: 'Blazes in Nether fortresses' },
+  gunpowder: { kind: 'vanilla', detail: 'Creepers, ghasts, or witches' },
+  slime_ball: { kind: 'vanilla', detail: 'Slimes in swamps or slime chunks below Y 40' },
+  spider_eye: { kind: 'vanilla', detail: 'Spiders and cave spiders' },
+  rotten_flesh: { kind: 'vanilla', detail: 'Zombies' },
+  feather: { kind: 'vanilla', detail: 'Chickens' },
+  rabbit_hide: { kind: 'vanilla', detail: 'Rabbits — 4 makes a leather' },
+  prismarine_shard: { kind: 'vanilla', detail: 'Guardians in ocean monuments' },
+  skeleton_skull: { kind: 'vanilla', detail: 'A skeleton killed by a charged creeper' },
+  nether_star: { kind: 'vanilla', detail: 'Kill the Wither' },
+  echo_shard: { kind: 'vanilla', detail: 'Ancient City chests in the Deep Dark' },
+  honeycomb: { kind: 'vanilla', detail: 'Shear a full beehive' },
+  ink_sac: { kind: 'vanilla', detail: 'Squid' },
+  wheat: { kind: 'vanilla', detail: 'Farm it, or find it in village fields' },
 }
 
 function sourceFor(itemId: string, craftable: boolean): MaterialSource {
+  // `#thematic:fabrics` is an "any item in this group" slot, not a specific item.
+  if (itemId.startsWith('#')) return { kind: 'crafted', detail: 'Any item from this group works' }
   const known = KNOWN_SOURCES[stripNs(itemId)]
   if (known) return known
   const ore = oreSourceFor(itemId)

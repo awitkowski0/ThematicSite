@@ -274,6 +274,11 @@ export interface RecipeNode {
 }
 
 function makeIngredient(resolved: ResolvedIngredient, releasedSuitIds: Set<string>): RecipeIngredient {
+  // `#thematic:charred_logs` means "any item in this tag" — name it that way and don't try
+  // to look up an icon or a recipe for a tag.
+  if (resolved.id.startsWith('#')) {
+    return { id: resolved.id, name: `Any ${titleCase(stripNamespace(resolved.id.slice(1)))}`, count: resolved.count }
+  }
   const bareId = stripNamespace(resolved.id)
   const isThematic = namespaceOf(resolved.id) === 'thematic'
   const isSuit = isThematic && releasedSuitIds.has(bareId)
