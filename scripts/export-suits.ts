@@ -9,6 +9,7 @@ import {
   ARMORS_DIR,
   ARMOR_TEXTURES_DIR,
   COLLECTIONS_DIR,
+  ITEM_TAGS_DIR,
   OUT_DATA_DIR,
   OUT_ITEMS_DIR,
   OUT_SUITS_DIR,
@@ -256,12 +257,34 @@ function loadAbilityInfo(): Map<string, { name: string; description?: string }> 
   return map
 }
 
+// ---------- item tags ----------
+
+/**
+ * Recipes can accept "any item in this tag" (e.g. `#thematic:fibers`). Load the tag files
+ * so the site can name the actual options instead of saying "any item from this group".
+ */
+function loadItemTags(): Map<string, string[]> {
+  const map = new Map<string, string[]>()
+  for (const file of walkJsonFiles(ITEM_TAGS_DIR)) {
+    const raw = readJson<{ values?: (string | { id?: string })[] }>(file)
+    const values = (raw.values ?? [])
+      .map((v) => (typeof v === 'string' ? v : v.id))
+      .filter((v): v is string => typeof v === 'string' && !v.startsWith('#'))
+    if (values.length > 0) map.set(`thematic:${path.basename(file, '.json')}`, values)
+  }
+  return map
+}
+
+let itemTags = new Map<string, string[]>()
+
 // ---------- recipes (top-level suit recipe + the recursive crafting-tree map) ----------
 
 export interface RecipeIngredient {
   id: string
   name: string
   count: number
+  /** For a tag ingredient: the actual items that satisfy it. */
+  options?: string[]
   iconPath?: string
   isSuit?: boolean // full other suit used as a component — link to /suits/$id, don't expand
 }
@@ -277,7 +300,14 @@ function makeIngredient(resolved: ResolvedIngredient, releasedSuitIds: Set<strin
   // `#thematic:charred_logs` means "any item in this tag" — name it that way and don't try
   // to look up an icon or a recipe for a tag.
   if (resolved.id.startsWith('#')) {
-    return { id: resolved.id, name: `Any ${titleCase(stripNamespace(resolved.id.slice(1)))}`, count: resolved.count }
+    const tag = resolved.id.slice(1)
+    const members = (itemTags.get(tag) ?? []).map((m) => titleCase(stripNamespace(m)))
+    return {
+      id: resolved.id,
+      name: `Any ${titleCase(stripNamespace(tag))}`.replace(/s$/, ''),
+      count: resolved.count,
+      ...(members.length > 0 ? { options: members } : {}),
+    }
   }
   const bareId = stripNamespace(resolved.id)
   const isThematic = namespaceOf(resolved.id) === 'thematic'
@@ -352,6 +382,7 @@ export function exportSuits() {
   const patchouliNames = loadPatchouliSuitNames()
   const abilityInfo = loadAbilityInfo()
   const recipeIndex = buildRecipeIndex()
+  itemTags = loadItemTags()
 
   const mergeCache = new Map<string, MergedArmor>()
 

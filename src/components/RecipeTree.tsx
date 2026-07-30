@@ -24,8 +24,16 @@ function IngredientRow({ ingredient, ancestors }: { ingredient: RecipeIngredient
   const icon = <ItemIcon path={ingredient.iconPath} />
 
   const label = (
-    <span>
-      {ingredient.name} <span className="text-neutral-500">×{ingredient.count}</span>
+    <span className="min-w-0">
+      <span className="block truncate">
+        {ingredient.name} <span className="text-neutral-500">×{ingredient.count}</span>
+      </span>
+      {ingredient.options?.length ? (
+        <span className="block truncate text-xs text-neutral-500" title={ingredient.options.join(', ')}>
+          {ingredient.options.slice(0, 3).join(', ')}
+          {ingredient.options.length > 3 ? `, +${ingredient.options.length - 3}` : ''}
+        </span>
+      ) : null}
     </span>
   )
 

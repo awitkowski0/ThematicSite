@@ -9,6 +9,7 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
   { to: '/abilities', title: 'Abilities', description: 'What each ability does, and the damage and cooldown behind it.' },
   { to: '/matchup', title: 'Matchup', description: 'Pit two suits against each other and see how the fight goes.' },
   { to: '/planner', title: 'Craft planner', description: 'Plan a batch or a shiny grind, and where to gather the materials.' },
+  { to: '/tierlist', title: 'Tier list', description: 'Drag suits into S-F tiers, scope it to one collection, and share your rankings.' },
   { to: '/mechanics/stats', title: 'Stats', description: 'What Defense, Utility, Attack and Speed do, plus a damage calculator.' },
   { to: '/mechanics', title: 'Mechanics', description: 'Rarity, shinies, keybinds, and where ores spawn.' },
   { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
@@ -17,7 +18,7 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
 
 // The guidebook's own categories, surfaced directly rather than buried a click deeper.
 const REFERENCE: { to: string; title: string; description: string }[] = [
-  { to: '/book/structures', title: 'Structures', description: 'Where they spawn and what they hold.' },
+  { to: '/structures', title: 'Structures', description: 'Spawn rarity, drop rates, and what fights you there.' },
   { to: '/book/mobs', title: 'Mobs', description: 'What spawns them, what they drop.' },
   { to: '/book/status_effect', title: 'Status effects', description: 'Every effect and what it does to you.' },
   { to: '/book/arrow', title: 'Arrows', description: 'Every arrowhead, with damage and cooldown.' },

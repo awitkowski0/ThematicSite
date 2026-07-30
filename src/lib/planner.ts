@@ -10,6 +10,7 @@ export interface MaterialNeed {
   id: string
   name: string
   total: number
+  options?: string[]
   iconPath?: string
   /** True when this is a whole suit consumed as a component. */
   isSuit?: boolean
@@ -82,7 +83,7 @@ const KNOWN_SOURCES: Record<string, MaterialSource> = {
 
   // Common vanilla materials — worth spelling out since a plan can call for hundreds.
   iron_ingot: { kind: 'vanilla', detail: 'Smelt iron ore — most common around Y 16, and Y 232 in mountains' },
-  gold_ingot: { kind: 'vanilla', detail: 'Smelt gold ore — Y -16 or below, or badlands at any depth' },
+  gold_ingot: { kind: 'vanilla', detail: 'Smelt raw gold — gold ore spawns Y 32 down to -64, peaking near Y -16, plus extra in badlands' },
   gold_block: { kind: 'vanilla', detail: '9 gold ingots each' },
   netherite_ingot: { kind: 'vanilla', detail: 'Ancient Debris in the Nether, Y 8-22' },
   diamond: { kind: 'vanilla', detail: 'Y -59 to 16, best around Y -59' },
@@ -127,7 +128,7 @@ const KNOWN_SOURCES: Record<string, MaterialSource> = {
 
 function sourceFor(itemId: string, craftable: boolean): MaterialSource {
   // `#thematic:fabrics` is an "any item in this group" slot, not a specific item.
-  if (itemId.startsWith('#')) return { kind: 'crafted', detail: 'Any item from this group works' }
+  if (itemId.startsWith('#')) return { kind: 'crafted', detail: 'Any one of these works' }
   const known = KNOWN_SOURCES[stripNs(itemId)]
   if (known) return known
   const ore = oreSourceFor(itemId)
@@ -176,15 +177,15 @@ export function planSuit(suit: Suit, quantity: number, expand: boolean): PlanRes
 
   // Guard against a recipe cycle (the in-game currency items form a real one) and against
   // pathological depth on the handful of suits that use other suits as components.
-  const expandItem = (id: string, name: string, count: number, iconPath: string | undefined, seen: Set<string>) => {
+  const expandItem = (id: string, name: string, count: number, iconPath: string | undefined, seen: Set<string>, options?: string[]) => {
     const node = expand ? getRecipeNode(id) : undefined
     if (!node || seen.has(id)) {
-      addTo(raw, { id, name, total: count, iconPath, source: sourceFor(id, Boolean(node)) })
+      addTo(raw, { id, name, total: count, iconPath, options, source: sourceFor(id, Boolean(node)) })
       return
     }
     const nextSeen = new Set(seen).add(id)
     for (const ingredient of node.ingredients) {
-      expandItem(ingredient.id, ingredient.name, ingredient.count * count, ingredient.iconPath, nextSeen)
+      expandItem(ingredient.id, ingredient.name, ingredient.count * count, ingredient.iconPath, nextSeen, ingredient.options)
     }
   }
 
@@ -195,6 +196,7 @@ export function planSuit(suit: Suit, quantity: number, expand: boolean): PlanRes
         name: ingredient.name,
         total: ingredient.count * quantity,
         iconPath: ingredient.iconPath,
+        options: ingredient.options,
         isSuit: ingredient.isSuit,
       }
       addTo(direct, need)
@@ -202,7 +204,7 @@ export function planSuit(suit: Suit, quantity: number, expand: boolean): PlanRes
         addTo(suitsConsumed, need)
         addTo(raw, { ...need, source: { kind: 'crafted', detail: 'Craft this suit separately' } })
       } else {
-        expandItem(ingredient.id, ingredient.name, ingredient.count * quantity, ingredient.iconPath, new Set())
+        expandItem(ingredient.id, ingredient.name, ingredient.count * quantity, ingredient.iconPath, new Set(), ingredient.options)
       }
     }
   }

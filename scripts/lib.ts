@@ -16,6 +16,7 @@ export const PATCHOULI_DIR = path.join(ASSETS_DIR, 'patchouli_books/thematic/en_
 export const COLLECTIONS_DIR = path.join(DATA_DIR, 'collections')
 export const ARMORS_DIR = path.join(DATA_DIR, 'armors')
 export const RECIPES_DIR = path.join(DATA_DIR, 'recipes')
+export const ITEM_TAGS_DIR = path.join(DATA_DIR, 'tags/items')
 export const PATCHOULI_CATEGORIES_DIR = path.join(PATCHOULI_DIR, 'categories')
 export const PATCHOULI_ENTRIES_DIR = path.join(PATCHOULI_DIR, 'entries')
 export const PATCHOULI_SUITS_DIR = path.join(PATCHOULI_ENTRIES_DIR, 'suits')

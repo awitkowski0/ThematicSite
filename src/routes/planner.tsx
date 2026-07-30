@@ -34,7 +34,11 @@ function MaterialRow({ need }: { need: MaterialNeed }) {
       <ItemIcon path={need.iconPath} />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm">{need.name}</span>
-        {need.source && <span className={`block text-xs ${SOURCE_STYLES[need.source.kind] ?? 'text-neutral-500'}`}>{need.source.detail}</span>}
+        {need.options?.length ? (
+          <span className="block text-xs text-neutral-500">{need.options.slice(0, 8).join(', ')}{need.options.length > 8 ? `, +${need.options.length - 8} more` : ''}</span>
+        ) : (
+          need.source && <span className={`block text-xs ${SOURCE_STYLES[need.source.kind] ?? 'text-neutral-500'}`}>{need.source.detail}</span>
+        )}
       </span>
       <span className="shrink-0 tabular-nums font-medium">×{need.total.toLocaleString()}</span>
     </li>

@@ -16,6 +16,8 @@ export interface RecipeIngredient {
   id: string
   name: string
   count: number
+  /** For a tag ingredient ("any fabric"): the actual items that satisfy it. */
+  options?: string[]
   iconPath?: string
   isSuit?: boolean
 }
