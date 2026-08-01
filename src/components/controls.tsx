@@ -2,7 +2,7 @@
 // the calculator, matchup simulator, abilities table and planner; one home means changing
 // a border colour is one edit rather than four.
 import { RARITIES } from '../lib/combat'
-import { Suit, accentForCollection } from '../lib/suits'
+import { Suit } from '../lib/suits'
 
 export const selectClass =
   'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
@@ -89,35 +89,6 @@ export function ItemIcon({ path, size = 6 }: { path?: string; size?: 5 | 6 | 8 }
   const dim = `h-${size} w-${size}`
   if (!path) return <span className={`${dim} shrink-0 rounded bg-neutral-100 dark:bg-neutral-900`} />
   return <img src={path} alt="" className={`${dim} shrink-0`} style={{ imageRendering: 'pixelated' }} />
-}
-
-/**
- * Suit swatch for the tier list. `texturePath`/`shinyTexturePath` exist but turned out to be
- * raw armor UV-unwrap sheets (confirmed by inspecting several), not portraits — illegible at
- * tile size, so this reuses the same accentForCollection colour coding as the suits pages
- * instead of an image, plus a small sparkle badge to show the shiny toggle.
- */
-export function SuitThumb({ suit, shiny }: { suit: Suit; shiny?: boolean }) {
-  const initials = suit.name
-    .split(/\s+/)
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
-  return (
-    <span
-      className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded text-xs font-semibold text-white"
-      style={{ backgroundColor: accentForCollection(suit.collection) }}
-    >
-      {initials}
-      {shiny && (
-        <span aria-hidden className="absolute -right-1.5 -top-1.5 text-sm leading-none drop-shadow">
-          ✨
-        </span>
-      )}
-    </span>
-  )
 }
 
 /** Big number + caption, the shape every calculator result uses. */

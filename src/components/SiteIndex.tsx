@@ -9,7 +9,6 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
   { to: '/abilities', title: 'Abilities', description: 'What each ability does, and the damage and cooldown behind it.' },
   { to: '/matchup', title: 'Matchup', description: 'Pit two suits against each other and see how the fight goes.' },
   { to: '/planner', title: 'Craft planner', description: 'Plan a batch or a shiny grind, and where to gather the materials.' },
-  { to: '/tierlist', title: 'Tier list', description: 'Drag suits into S-F tiers, scope it to one collection, and share your rankings.' },
   { to: '/mechanics/stats', title: 'Stats', description: 'What Defense, Utility, Attack and Speed do, plus a damage calculator.' },
   { to: '/mechanics', title: 'Mechanics', description: 'Rarity, shinies, keybinds, and where ores spawn.' },
   { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
