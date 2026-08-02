@@ -12,7 +12,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const REPO = process.env.THEMATIC_REPO ?? 'thematicarmor/Thematic'
-const TARGET = process.env.THEMATIC_SOURCE_DIR ?? '..'
+const EXPLICIT_TARGET = process.env.THEMATIC_SOURCE_DIR
 const TOKEN = process.env.THEMATIC_REPO_TOKEN
 
 // Only the paths the export scripts actually read — a full working tree is far larger.
@@ -27,12 +27,20 @@ const SPARSE_PATHS = [
   'src/main/resources/assets/thematic/textures/block',
 ]
 
-const resolved = path.resolve(TARGET)
+// Local-dev convention: this repo is cloned inside a Thematic checkout, so ".." already has the
+// mod source and there's nothing to fetch. If that's not the case (e.g. on Vercel, which only
+// clones this repo in isolation) and we actually need to clone, never clone into ".." blindly —
+// it always exists and is never empty (it's a real parent directory — on Vercel that's the
+// build's own root, not a place we can write into), so fall back to a dedicated subdirectory
+// instead. An explicit THEMATIC_SOURCE_DIR always wins either way.
+const checkTarget = path.resolve(EXPLICIT_TARGET ?? '..')
 
-if (fs.existsSync(path.join(resolved, 'src/main/resources'))) {
-  console.log(`[fetch-source] mod source already present at ${resolved} — nothing to fetch`)
+if (fs.existsSync(path.join(checkTarget, 'src/main/resources'))) {
+  console.log(`[fetch-source] mod source already present at ${checkTarget} — nothing to fetch`)
   process.exit(0)
 }
+
+const resolved = EXPLICIT_TARGET ? checkTarget : path.resolve('thematic-source')
 
 if (!TOKEN) {
   console.error(
