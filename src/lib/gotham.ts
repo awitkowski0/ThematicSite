@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 // The live map (BlueMap or similar) served directly by the game host. Note this is plain HTTP —
 // if thematic.bond is ever not HTTPS this is fine, but under HTTPS most browsers block it as
 // mixed active content, so the /gotham page also renders a plain link as a fallback.
-export const GOTHAM_MAP_URL = 'http://208.92.233.96:25578/'
+export const GOTHAM_MAP_URL = 'http://208.92.233.96:25578/#gotham:15:0:-58:837:0:0:0:1:flat'
 
 export type RaidsEntry = { rank: number; uuid: string; username: string; rating: number; division: string; killsThisCycle: number }
 export type GuildEntry = { rank: number; name: string; prefix: string; color: string; ownerUsername: string; pointsBalance: number; memberCount: number }

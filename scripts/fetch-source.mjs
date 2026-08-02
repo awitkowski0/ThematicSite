@@ -11,7 +11,7 @@ import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const REPO = process.env.THEMATIC_REPO ?? 'awitkowski0/Thematic'
+const REPO = process.env.THEMATIC_REPO ?? 'thematicarmor/Thematic'
 const TARGET = process.env.THEMATIC_SOURCE_DIR ?? '..'
 const TOKEN = process.env.THEMATIC_REPO_TOKEN
 
