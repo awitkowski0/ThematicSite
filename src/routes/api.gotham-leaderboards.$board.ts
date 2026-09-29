@@ -4,7 +4,11 @@ import { createFileRoute } from '@tanstack/react-router'
 // it server-side so the browser only ever talks to thematic.bond over HTTPS - calling the mod
 // directly from client-side JS would be blocked as mixed content once the site is served over
 // HTTPS (see src/lib/gotham.ts).
-const GOTHAM_API_BASE = 'http://208.92.233.96:25547'
+//
+// Read at request time, not build time. Self-hosted, the site runs on the same box as the
+// server and sets this to reach it container-to-container (http://mc-prod:25547), so the API
+// needs no public port at all.
+const GOTHAM_API_BASE = process.env.GOTHAM_API_BASE ?? 'http://208.92.233.96:25547'
 const VALID_BOARDS = new Set(['raids', 'guilds', 'guild-contributions', 'economy', 'crafting-event'])
 
 function jsonError(message: string, status: number) {
