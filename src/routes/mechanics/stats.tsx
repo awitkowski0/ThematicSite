@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { entriesFor } from '../../lib/book'
-import { MarkdownContent } from '../../components/MarkdownContent'
+import { loadEntry } from '../../lib/book'
+import { GuidePages } from '../../components/GuidePages'
 import { DamageCalculator } from '../../components/DamageCalculator'
 
 export const Route = createFileRoute('/mechanics/stats')({
@@ -11,11 +11,12 @@ export const Route = createFileRoute('/mechanics/stats')({
       { name: 'description', content: 'The four suit stats in Thematic — Defense, Utility, Attack, Speed — what they do, and a calculator for working out real damage.' },
     ],
   }),
+  loader: () => loadEntry('getting_started', 'stats'),
   component: StatsPage,
 })
 
 function StatsPage() {
-  const entry = entriesFor('getting_started').find((e) => e.id === 'stats')
+  const entry = Route.useLoaderData()
 
   return (
     <div>
@@ -39,7 +40,7 @@ function StatsPage() {
 
       <section className="mt-10 space-y-6">
         <h2 className="text-lg font-semibold">How it works</h2>
-        {entry?.textBlocks.map((block, i) => <MarkdownContent key={i} markdown={block} />)}
+        {entry && <GuidePages pages={entry.pages} />}
       </section>
 
       <p className="mt-8 text-xs text-neutral-500">

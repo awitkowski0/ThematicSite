@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { suits } from '../lib/suits'
-import { bookCategories, entriesFor } from '../lib/book'
+import { bookCategories } from '../lib/book'
 import { blogPosts } from '../lib/blog'
 
 const SITE_URL = 'https://thematic.bond'
@@ -12,8 +12,8 @@ export const Route = createFileRoute('/sitemap.xml')({
       GET: async () => {
         const staticPaths = ['/', '/suits', '/faq', '/play', '/server', '/book', '/blog', '/mechanics', '/mechanics/stats', '/mechanics/rarities', '/mechanics/shiny', '/mechanics/keybinds', '/mechanics/ores', '/abilities', '/matchup', '/planner', '/structures']
         const suitPaths = suits.filter((s) => !s.wip).map((s) => `/suits/${s.id}`)
-        // "suit" entries live at /suits/$id (already covered above), not a separate /book/suit/$id page.
-        const bookPaths = bookCategories.filter((c) => c.id !== 'suit').flatMap((c) => [`/book/${c.id}`, ...entriesFor(c.id).map((e) => `/book/${c.id}/${e.id}`)])
+        // Entries whose suit has its own page are listed under /suits/$id above.
+        const bookPaths = bookCategories.flatMap((c) => [`/book/${c.id}`, ...c.entries.filter((e) => e.href.startsWith('/book/')).map((e) => e.href)])
         const blogPaths = blogPosts.map((p) => `/blog/${p.version}`)
         const urls = [...staticPaths, ...suitPaths, ...bookPaths, ...blogPaths]
           .map((p) => `  <url><loc>${SITE_URL}${p}</loc></url>`)

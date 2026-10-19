@@ -1,12 +1,13 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { entriesFor } from '../../lib/book'
-import { MarkdownContent } from '../../components/MarkdownContent'
+import { loadEntry } from '../../lib/book'
+import { GuidePages } from '../../components/GuidePages'
 
 export const Route = createFileRoute('/mechanics/rarities')({
   head: () => ({
     meta: [{ title: 'Rarities — Thematic Mechanics' }, { name: 'description', content: 'All 8 suit rarity tiers in Thematic, from Starter to Unique, and how IV affects your stats.' }],
   }),
+  loader: () => loadEntry('getting_started', 'suit_rarities'),
   component: RaritiesPage,
 })
 
@@ -29,7 +30,7 @@ const UNDOCUMENTED_TIERS = [
 ]
 
 function RaritiesPage() {
-  const entry = entriesFor('getting_started').find((e) => e.id === 'suit_rarities')
+  const entry = Route.useLoaderData()
 
   return (
     <div>
@@ -39,7 +40,7 @@ function RaritiesPage() {
       <h1 className="mt-2 text-3xl font-bold">Rarities</h1>
 
       <div className="mt-6 space-y-6">
-        {entry?.textBlocks.map((block, i) => <MarkdownContent key={i} markdown={block} />)}
+        {entry && <GuidePages pages={entry.pages} />}
       </div>
 
       <h2 className="mt-10 text-lg font-semibold">Rarer than Legendary</h2>

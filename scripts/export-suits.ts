@@ -15,6 +15,7 @@ import {
   OUT_DATA_DIR,
   findResource,
   listResources,
+  listResourcesAll,
   OUT_ITEMS_DIR,
   OUT_SUITS_DIR,
   copyIfExists,
@@ -23,7 +24,7 @@ import {
   requireSourceExists,
   resolveThematicIcon,
   resolveVanillaIcon,
-  sanitizePatchouliText,
+  sanitizeGuideText,
   stripNamespace,
   titleCase,
 } from './lib'
@@ -221,13 +222,13 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
   return merged
 }
 
-// ---------- patchouli (display names + ability descriptions) ----------
+// ---------- guide + lang (display names + ability descriptions) ----------
 
-function loadPatchouliSuitNames(): Map<string, string> {
+function loadSuitNames(): Map<string, string> {
   const map = new Map<string, string>()
   // Display names come from the lang files (item.thematic.<id>), merged across the engine and the
   // shipped packs; a suit's guide entry, below, takes precedence where it has one.
-  for (const { file } of listResources(`${ASSETS}/lang`)) {
+  for (const { file } of listResourcesAll(`${ASSETS}/lang`)) {
     if (path.basename(file) !== 'en_us.json') continue
     for (const [key, value] of Object.entries(readJson<Record<string, unknown>>(file))) {
       if (key.startsWith('item.thematic.') && typeof value === 'string') map.set(key.slice('item.thematic.'.length), value)
@@ -261,7 +262,7 @@ function loadAbilityInfo(): Map<string, { name: string; description?: string }> 
     const id = path.basename(file, '.json')
     const raw = readJson<{ name: string; pages?: unknown[] }>(file)
     const rawDescription = raw.pages?.find((p): p is string => typeof p === 'string')
-    map.set(id, { name: raw.name, description: rawDescription ? sanitizePatchouliText(rawDescription) : undefined })
+    map.set(id, { name: raw.name, description: rawDescription ? sanitizeGuideText(rawDescription) : undefined })
   }
   return map
 }
@@ -388,7 +389,7 @@ function buildRecipeGraph(
 export function exportSuits() {
   const collections = loadCollections()
   const rawArmors = loadRawArmors()
-  const patchouliNames = loadPatchouliSuitNames()
+  const suitNames = loadSuitNames()
   const abilityInfo = loadAbilityInfo()
   const recipeIndex = buildRecipeIndex()
   itemTags = loadItemTags()
@@ -426,12 +427,12 @@ export function exportSuits() {
     texturePath?: string
     shinyTexturePath?: string
   }[] = []
-  let missingPatchouliCount = 0
+  let missingGuideEntryCount = 0
 
   for (const id of allIds) {
     const merged = mergeCache.get(id)!
-    const displayName = patchouliNames.get(id)
-    if (!displayName) missingPatchouliCount++
+    const displayName = suitNames.get(id)
+    if (!displayName) missingGuideEntryCount++
 
     const collectionMeta = collections.get(merged.collection)
 
@@ -513,8 +514,8 @@ export function exportSuits() {
 
   console.log(`[export-suits] wrote ${suits.length} suits (${releasedCount} released, ${suits.length - releasedCount} WIP) across ${collectionsOut.length} collections`)
   console.log(`[export-suits] crafting-tree map covers ${Object.keys(recipeGraph).length} distinct thematic components`)
-  if (missingPatchouliCount > 0) {
-    console.log(`[export-suits] ${missingPatchouliCount} suit(s) have no Patchouli guidebook entry — using title-cased id as their display name`)
+  if (missingGuideEntryCount > 0) {
+    console.log(`[export-suits] ${missingGuideEntryCount} suit(s) have no display name in the lang files or a guide entry — using title-cased id as their display name`)
   }
 }
 

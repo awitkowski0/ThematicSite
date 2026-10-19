@@ -8,3 +8,41 @@
 html {
   color-scheme: light dark;
 }
+
+/* Guidebook text: colours from the guide's markup come with a light-theme and a dark-theme value. */
+.gc {
+  color: var(--gc-l);
+}
+@media (prefers-color-scheme: dark) {
+  .gc {
+    color: var(--gc-d);
+  }
+}
+.gtip {
+  position: relative;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.gtip::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  z-index: 10;
+  width: max-content;
+  max-width: min(18rem, 80vw);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  background: #171717;
+  color: #fafafa;
+  font-size: 0.75rem;
+  line-height: 1.25;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s;
+}
+.gtip:hover::after,
+.gtip:focus::after {
+  opacity: 1;
+}

@@ -6,8 +6,9 @@ import { exportOres } from './export-ores'
 import { exportBlog } from './export-blog'
 import { exportAbilities } from './export-abilities'
 
+// Order matters: the guidebook export reads what the suit, ore and ability exports wrote.
 exportSuits()
-exportBook()
 exportOres()
 exportBlog()
-await exportAbilities() // network-bound (Google Sheets), so last and awaited
+await exportAbilities() // network-bound (Google Sheets), so awaited
+exportBook()

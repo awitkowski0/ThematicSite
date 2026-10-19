@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { getCategory } from '../../lib/book'
-import { MarkdownContent } from '../../components/MarkdownContent'
+import { GuideText } from '../../components/GuideText'
 
 export const Route = createFileRoute('/mechanics/shiny')({
   head: () => ({
@@ -20,7 +20,7 @@ function ShinyPage() {
       </Link>
       <h1 className="mt-2 text-3xl font-bold">Shiny System</h1>
       <div className="mt-6">
-        <MarkdownContent markdown={category?.description ?? 'Not available in this build.'} />
+        <GuideText markup={category?.description || 'Not available in this build.'} />
       </div>
       <p className="mt-6 text-sm text-neutral-500 dark:text-neutral-400">
         Server admins can tune the odds with the <code>shinyChance</code> gamerule (default 0.03 — 3%).

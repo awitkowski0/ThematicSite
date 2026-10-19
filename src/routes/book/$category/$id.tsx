@@ -1,19 +1,23 @@
 import { createFileRoute, Link, notFound } from '@tanstack/react-router'
 
-import { getCategory, getEntry } from '../../../lib/book'
-import { MarkdownContent } from '../../../components/MarkdownContent'
+import { getCategory, loadEntry } from '../../../lib/book'
+import { plain } from '../../../lib/guideMarkup'
+import { GuidePages } from '../../../components/GuidePages'
+import { GuideInline } from '../../../components/GuideText'
 
 export const Route = createFileRoute('/book/$category/$id')({
-  loader: ({ params }) => {
+  loader: async ({ params }) => {
     const category = getCategory(params.category)
-    const entry = category ? getEntry(params.category, params.id) : undefined
+    const entry = category ? await loadEntry(params.category, params.id) : undefined
     if (!category || !entry) throw notFound()
     return { category, entry }
   },
-  head: ({ loaderData }) =>
-    loaderData
-      ? { meta: [{ title: `${loaderData.entry.name} — Thematic Guidebook` }, { name: 'description', content: loaderData.entry.textBlocks[0] ?? loaderData.entry.name }] }
-      : {},
+  head: ({ loaderData }) => {
+    if (!loaderData) return {}
+    const first = loaderData.entry.pages.find((p) => typeof p.text === 'string' || typeof p.description === 'string')
+    const blurb = plain(first?.text ?? first?.description)
+    return { meta: [{ title: `${loaderData.entry.name} — Thematic Guidebook` }, { name: 'description', content: blurb || loaderData.entry.name }] }
+  },
   component: BookEntryDetail,
   notFoundComponent: () => (
     <div>
@@ -31,15 +35,13 @@ function BookEntryDetail() {
   return (
     <div>
       <Link to="/book/$category" params={{ category: category.id }} className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-        ← {category.name}
+        ← <GuideInline markup={category.name} />
       </Link>
-      <h1 className="mt-2 text-3xl font-bold">{entry.name}</h1>
-
-      <div className="mt-6 space-y-6">
-        {entry.textBlocks.map((block, i) => (
-          <MarkdownContent key={i} markdown={block} />
-        ))}
-      </div>
+      <h1 className="mt-2 flex items-center gap-3 text-3xl font-bold">
+        {entry.icon && <img src={entry.icon} alt="" className="h-9 w-9 [image-rendering:pixelated]" />}
+        {entry.name}
+      </h1>
+      <GuidePages pages={entry.pages} />
     </div>
   )
 }
