@@ -20,12 +20,11 @@ export default defineConfig({
         // the routes that actually read them pull them in.
         manualChunks: {
           'data-suits': ['./src/data/suits.generated.json', './src/data/recipes.generated.json'],
-          'data-book': ['./src/data/book.generated.json'],
           'data-abilities': ['./src/data/abilities.generated.json'],
         },
       },
     },
   },
-  // nitro() is required for Vercel's zero-config TanStack Start detection/build output.
+  // nitro() builds the standalone server in .output/ that `npm start` runs.
   plugins: [tailwindcss(), tanstackStart({ router: { autoCodeSplitting: true } }), nitro(), viteReact()],
 })

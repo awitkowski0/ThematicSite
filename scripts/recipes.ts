@@ -65,8 +65,6 @@ function extractResultId(raw: RawRecipe): string | undefined {
 // use the same flat `ingredients` shape as vanilla shapeless. See scripts/lib.ts callers
 // for the full rundown of which shape goes with which `type` value.
 function extractIngredients(raw: RawRecipe): ResolvedIngredient[] {
-  if (raw.type === 'patchouli:shapeless_book_recipe') return []
-
   const tally = new Map<string, number>()
   const add = (id: string | undefined, count: number) => {
     if (!id || count <= 0) return

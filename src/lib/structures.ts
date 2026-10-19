@@ -188,7 +188,3 @@ export const STRUCTURES: ThematicStructure[] = [
     tips: ['They give off a faint light, which helps when scanning a dark ocean floor.'],
   },
 ]
-
-export function getStructure(id: string): ThematicStructure | undefined {
-  return STRUCTURES.find((s) => s.id === id)
-}

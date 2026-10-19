@@ -1,12 +1,12 @@
 // Makes the private Thematic mod source available to the export scripts.
 //
-// Locally: no-op — you already have it, since this repo is cloned inside a Thematic
-// checkout (THEMATIC_SOURCE_DIR defaults to "..").
+// Locally: no-op when the source is already there. THEMATIC_SOURCE_DIR points at a Thematic
+// checkout (default: "..", i.e. this repo cloned inside one). The box that serves the site builds
+// this way, from a checkout it keeps up to date.
 //
-// On Vercel: Vercel only clones THIS repo, and Thematic is private, so the build fetches
-// it here using THEMATIC_REPO_TOKEN (a read-only fine-grained PAT set as a Vercel
-// environment variable — never committed, and not exposed to the browser since it isn't
-// prefixed VITE_).
+// Otherwise, with THEMATIC_REPO_TOKEN set (a read-only fine-grained PAT, Contents: Read on the
+// Thematic repo; build-time only, never committed, never exposed to the browser), it does a
+// blobless sparse clone of just the paths the export scripts read.
 import { execFileSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -25,27 +25,19 @@ const SPARSE_PATHS = [
   // itself only reads the packs that ship, per src/common/resources/packs.json).
   'src/common/resources/data/thematic',
   'src/common/resources/assets/thematic/guide',
+  'src/common/resources/assets/thematic/lang',
   'src/common/resources/assets/thematic/textures/armor',
   'src/common/resources/assets/thematic/textures/item',
   'src/common/resources/assets/thematic/textures/block',
   'src/packs',
-  // Legacy single-root layout (before the multiversion move).
-  'src/main/resources/data/thematic',
-  'src/main/resources/assets/thematic/patchouli_books',
-  'src/main/resources/assets/thematic/textures/armor',
-  'src/main/resources/assets/thematic/textures/item',
-  'src/main/resources/assets/thematic/textures/block',
 ]
 
-// Local-dev convention: this repo is cloned inside a Thematic checkout, so ".." already has the
-// mod source and there's nothing to fetch. If that's not the case (e.g. on Vercel, which only
-// clones this repo in isolation) and we actually need to clone, never clone into ".." blindly —
-// it always exists and is never empty (it's a real parent directory — on Vercel that's the
-// build's own root, not a place we can write into), so fall back to a dedicated subdirectory
-// instead. An explicit THEMATIC_SOURCE_DIR always wins either way.
+// If the source is not already there and we actually need to clone, never clone into ".."
+// blindly: it always exists and is never empty, so fall back to a dedicated subdirectory. An
+// explicit THEMATIC_SOURCE_DIR always wins either way.
 const checkTarget = path.resolve(EXPLICIT_TARGET ?? '..')
 
-if (fs.existsSync(path.join(checkTarget, 'src/common/resources')) || fs.existsSync(path.join(checkTarget, 'src/main/resources'))) {
+if (fs.existsSync(path.join(checkTarget, 'src/common/resources'))) {
   console.log(`[fetch-source] mod source already present at ${checkTarget} — nothing to fetch`)
   process.exit(0)
 }
@@ -55,8 +47,8 @@ const resolved = EXPLICIT_TARGET ? checkTarget : path.resolve('thematic-source')
 if (!TOKEN) {
   console.error(
     `[fetch-source] No mod source at ${resolved} and THEMATIC_REPO_TOKEN is not set.\n` +
-      `  Locally: clone this repo inside a Thematic checkout, or set THEMATIC_SOURCE_DIR.\n` +
-      `  On Vercel: add THEMATIC_REPO_TOKEN (fine-grained PAT, Contents: Read on ${REPO}).`,
+      `  Locally: point THEMATIC_SOURCE_DIR at a Thematic checkout (or clone this repo inside one).\n` +
+      `  Or set THEMATIC_REPO_TOKEN (fine-grained PAT, Contents: Read on ${REPO}) to clone it.`,
   )
   process.exit(1)
 }
