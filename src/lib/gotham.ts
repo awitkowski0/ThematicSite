@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react'
 
-// The live map (BlueMap or similar) served directly by the game host. Note this is plain HTTP —
-// if thematic.bond is ever not HTTPS this is fine, but under HTTPS most browsers block it as
-// mixed active content, so the /gotham page also renders a plain link as a fallback.
-export const GOTHAM_MAP_URL = 'http://208.92.233.96:25578/#gotham:15:0:-58:837:0:0:0:1:flat'
-
-export type RaidsEntry = { rank: number; uuid: string; username: string; rating: number; division: string; killsThisCycle: number }
+export type LeaderboardIndex = { boards: string[]; eloSeasonId: string | null; eloSeasonFinished: boolean; craftingEventWeekId: number | null; generatedAt: number }
+export type EloEntry = { rank: number; uuid: string; username: string; rating: number; kills: number; deaths: number }
 export type GuildEntry = { rank: number; name: string; prefix: string; color: string; ownerUsername: string; pointsBalance: number; memberCount: number }
 export type ContributionEntry = { rank: number; uuid: string; username: string; gained: number; used: number; lost: number; net: number }
 export type EconomyEntry = { rank: number; uuid: string; username: string; balance: number }
@@ -32,22 +28,18 @@ export const MINECRAFT_COLORS: Record<string, string> = {
   WHITE: '#FFFFFF',
 }
 
-export const DIVISION_COLORS: Record<string, string> = {
-  UNRANKED: 'text-neutral-500 dark:text-neutral-400',
-  BRONZE: 'text-amber-700 dark:text-amber-500',
-  SILVER: 'text-slate-500 dark:text-slate-300',
-  GOLD: 'text-yellow-600 dark:text-yellow-400',
-  PLATINUM: 'text-cyan-600 dark:text-cyan-300',
-  DIAMOND: 'text-sky-500 dark:text-sky-300',
-  CROWN: 'text-fuchsia-600 dark:text-fuchsia-400',
-}
-
 // Proxied through the site's own server (see src/routes/api.gotham-leaderboards.$board.ts) so the
 // browser only ever talks to thematic.bond over HTTPS - the mod's HTTP API is only ever called
 // server-side, which sidesteps the mixed-content restriction entirely.
+// Guild colours arrive in mixed case ("dark_gray", "Red", "WHITE"); look them up normalised.
+export const guildColor = (name: string) => MINECRAFT_COLORS[name.toUpperCase()] ?? '#AAAAAA'
+
+// The mod reports "Unknown" for players it has no cached name for.
+export const playerName = (name: string) => (name && name !== 'Unknown' ? name : 'Unknown player')
+
 async function fetchLeaderboard<T>(board: string, params?: Record<string, string>): Promise<T> {
   const search = params ? `?${new URLSearchParams(params).toString()}` : ''
-  const res = await fetch(`/api/gotham-leaderboards/${board}${search}`)
+  const res = await fetch(`/api/gotham-leaderboards/${board || 'index'}${search}`)
   if (!res.ok) {
     const body = await res.json().catch(() => ({}) as { error?: string })
     throw new Error(body.error ?? `request failed (${res.status})`)

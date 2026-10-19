@@ -59,8 +59,8 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             <Link to="/faq" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
               FAQ
             </Link>
-            <Link to="/gotham" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
-              Gotham
+            <Link to="/server" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+              Server
             </Link>
             <Link
               to="/play"

@@ -12,6 +12,7 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
   { to: '/mechanics/stats', title: 'Stats', description: 'What Defense, Utility, Attack and Speed do, plus a damage calculator.' },
   { to: '/mechanics', title: 'Mechanics', description: 'Rarity, shinies, keybinds, and where ores spawn.' },
   { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
+  { to: '/server', title: 'Server', description: 'Join address, who is online, and the leaderboards.' },
   { to: '/faq', title: 'FAQ', description: 'Common questions about installing and playing.' },
 ]
 

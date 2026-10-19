@@ -9,7 +9,7 @@ import { createFileRoute } from '@tanstack/react-router'
 // server and sets this to reach it container-to-container (http://mc-prod:25547), so the API
 // needs no public port at all.
 const GOTHAM_API_BASE = process.env.GOTHAM_API_BASE ?? 'http://208.92.233.96:25547'
-const VALID_BOARDS = new Set(['raids', 'guilds', 'guild-contributions', 'economy', 'crafting-event'])
+const VALID_BOARDS = new Set(['index', 'elo', 'guilds', 'guild-contributions', 'economy', 'crafting-event'])
 
 function jsonError(message: string, status: number) {
   return new Response(JSON.stringify({ error: message }), { status, headers: { 'Content-Type': 'application/json; charset=utf-8' } })
@@ -25,7 +25,7 @@ export const Route = createFileRoute('/api/gotham-leaderboards/$board')({
 
         const search = new URL(request.url).search
         try {
-          const upstream = await fetch(`${GOTHAM_API_BASE}/api/leaderboards/${params.board}${search}`, {
+          const upstream = await fetch(`${GOTHAM_API_BASE}/api/leaderboards${params.board === 'index' ? '' : `/${params.board}`}${search}`, {
             signal: AbortSignal.timeout(5000),
           })
           const body = await upstream.text()
