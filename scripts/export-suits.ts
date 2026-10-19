@@ -6,15 +6,17 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import {
-  ARMORS_DIR,
-  ARMOR_TEXTURES_DIR,
-  COLLECTIONS_DIR,
-  ITEM_TAGS_DIR,
+  ARMORS_REL,
+  ASSETS,
+  COLLECTIONS_REL,
+  GUIDE_ABILITIES_REL,
+  GUIDE_SUITS_REL,
+  ITEM_TAGS_REL,
   OUT_DATA_DIR,
+  findResource,
+  listResources,
   OUT_ITEMS_DIR,
   OUT_SUITS_DIR,
-  PATCHOULI_ABILITIES_DIR,
-  PATCHOULI_SUITS_DIR,
   copyIfExists,
   namespaceOf,
   readJson,
@@ -24,7 +26,6 @@ import {
   sanitizePatchouliText,
   stripNamespace,
   titleCase,
-  walkJsonFiles,
 } from './lib'
 import { ResolvedIngredient, buildRecipeIndex, resolveRecipeById } from './recipes'
 
@@ -41,7 +42,7 @@ interface CollectionMeta {
 
 function loadCollections(): Map<string, CollectionMeta> {
   const map = new Map<string, CollectionMeta>()
-  for (const file of walkJsonFiles(COLLECTIONS_DIR)) {
+  for (const { file } of listResources(COLLECTIONS_REL)) {
     const raw = readJson<{ id: string; name: string; description?: string; importance?: number }>(file)
     map.set(raw.id, {
       id: raw.id,
@@ -113,12 +114,12 @@ const DEFAULT_WIP = true
 
 function loadRawArmors(): Map<string, RawArmor> {
   const map = new Map<string, RawArmor>()
-  if (!fs.existsSync(ARMORS_DIR)) return map
-
-  for (const collectionDir of fs.readdirSync(ARMORS_DIR, { withFileTypes: true })) {
-    if (!collectionDir.isDirectory()) continue
-    const collection = collectionDir.name
-    for (const file of walkJsonFiles(path.join(ARMORS_DIR, collection))) {
+  {
+    // armors/<collection>/<id>.json, merged across the engine and every shipped pack.
+    for (const { rel, file } of listResources(ARMORS_REL)) {
+      const parts = rel.split('/')
+      if (parts.length < 2) continue
+      const collection = parts[0]
       const id = path.basename(file, '.json')
       const raw = readJson<{
         abilities?: { identifier: string; keybind?: string; remove?: boolean }[]
@@ -224,7 +225,15 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
 
 function loadPatchouliSuitNames(): Map<string, string> {
   const map = new Map<string, string>()
-  for (const file of walkJsonFiles(PATCHOULI_SUITS_DIR)) {
+  // Display names come from the lang files (item.thematic.<id>), merged across the engine and the
+  // shipped packs; a suit's guide entry, below, takes precedence where it has one.
+  for (const { file } of listResources(`${ASSETS}/lang`)) {
+    if (path.basename(file) !== 'en_us.json') continue
+    for (const [key, value] of Object.entries(readJson<Record<string, unknown>>(file))) {
+      if (key.startsWith('item.thematic.') && typeof value === 'string') map.set(key.slice('item.thematic.'.length), value)
+    }
+  }
+  for (const { file } of listResources(GUIDE_SUITS_REL)) {
     const raw = readJson<{ name: string; icon?: string }>(file)
     if (!raw.icon) continue
     map.set(stripNamespace(raw.icon), raw.name)
@@ -248,7 +257,7 @@ function starterDisplayName(id: string): string | undefined {
 
 function loadAbilityInfo(): Map<string, { name: string; description?: string }> {
   const map = new Map<string, { name: string; description?: string }>()
-  for (const file of walkJsonFiles(PATCHOULI_ABILITIES_DIR)) {
+  for (const { file } of listResources(GUIDE_ABILITIES_REL)) {
     const id = path.basename(file, '.json')
     const raw = readJson<{ name: string; pages?: unknown[] }>(file)
     const rawDescription = raw.pages?.find((p): p is string => typeof p === 'string')
@@ -265,7 +274,7 @@ function loadAbilityInfo(): Map<string, { name: string; description?: string }> 
  */
 function loadItemTags(): Map<string, string[]> {
   const map = new Map<string, string[]>()
-  for (const file of walkJsonFiles(ITEM_TAGS_DIR)) {
+  for (const { file } of listResources(ITEM_TAGS_REL)) {
     const raw = readJson<{ values?: (string | { id?: string })[] }>(file)
     const values = (raw.values ?? [])
       .map((v) => (typeof v === 'string' ? v : v.id))
@@ -428,10 +437,10 @@ export function exportSuits() {
 
     let texturePath: string | undefined
     let shinyTexturePath: string | undefined
-    if (copyIfExists(path.join(ARMOR_TEXTURES_DIR, `${id}.png`), path.join(OUT_SUITS_DIR, `${id}.png`))) {
+    if (copyIfExists(findResource(`${ASSETS}/textures/armor/${id}.png`), path.join(OUT_SUITS_DIR, `${id}.png`))) {
       texturePath = `/suits/${id}.png`
     }
-    if (copyIfExists(path.join(ARMOR_TEXTURES_DIR, `${id}_shiny.png`), path.join(OUT_SUITS_DIR, `${id}_shiny.png`))) {
+    if (copyIfExists(findResource(`${ASSETS}/textures/armor/${id}_shiny.png`), path.join(OUT_SUITS_DIR, `${id}_shiny.png`))) {
       shinyTexturePath = `/suits/${id}_shiny.png`
     }
 

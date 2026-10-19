@@ -20,6 +20,16 @@ const TOKEN = process.env.THEMATIC_REPO_TOKEN
 // directory") and already includes every root-level file anyway, which is how
 // changelog.txt (needed by export-blog.ts) ends up present without being listed.
 const SPARSE_PATHS = [
+  // Current multiversion layout: the engine, plus each pack's resources. Cone-mode sparse
+  // checkout takes whole directories, so this also pulls the wip/starwars packs (the export
+  // itself only reads the packs that ship, per src/common/resources/packs.json).
+  'src/common/resources/data/thematic',
+  'src/common/resources/assets/thematic/guide',
+  'src/common/resources/assets/thematic/textures/armor',
+  'src/common/resources/assets/thematic/textures/item',
+  'src/common/resources/assets/thematic/textures/block',
+  'src/packs',
+  // Legacy single-root layout (before the multiversion move).
   'src/main/resources/data/thematic',
   'src/main/resources/assets/thematic/patchouli_books',
   'src/main/resources/assets/thematic/textures/armor',
@@ -35,7 +45,7 @@ const SPARSE_PATHS = [
 // instead. An explicit THEMATIC_SOURCE_DIR always wins either way.
 const checkTarget = path.resolve(EXPLICIT_TARGET ?? '..')
 
-if (fs.existsSync(path.join(checkTarget, 'src/main/resources'))) {
+if (fs.existsSync(path.join(checkTarget, 'src/common/resources')) || fs.existsSync(path.join(checkTarget, 'src/main/resources'))) {
   console.log(`[fetch-source] mod source already present at ${checkTarget} — nothing to fetch`)
   process.exit(0)
 }

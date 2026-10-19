@@ -7,15 +7,16 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import {
+  GUIDE_CATEGORIES_REL,
+  GUIDE_ENTRIES_REL,
   OUT_DATA_DIR,
-  PATCHOULI_CATEGORIES_DIR,
-  PATCHOULI_ENTRIES_DIR,
+  listResources,
   readJson,
   requireSourceExists,
-  sanitizePatchouliText,
+  sanitizeGuideText,
   stripNamespace,
   titleCase,
-  walkJsonFiles,
+  type GuideLinkResolver,
 } from './lib'
 
 requireSourceExists()
@@ -39,7 +40,9 @@ interface RawCategory {
   name: string
   description?: string
   icon?: string
-  sortnum?: number
+  sortnum?: number // Patchouli
+  sort?: number // current guide
+  requires?: string // current guide: "op" marks operator-only chapters
   parent?: string
 }
 
@@ -47,6 +50,7 @@ interface RawPage {
   type?: string
   title?: string
   text?: string
+  description?: string // passive_description
 }
 
 interface RawEntry {
@@ -60,18 +64,19 @@ interface RawEntry {
 // cross-ref lists, patchouli:entity's usually-blank caption, and thematic's own
 // live-rendered pages like thematic:stats/thematic:recipe/thematic:ability_data) is skipped
 // rather than guessed at — see the skip-count summary this script logs at the end.
-const TEXT_PAGE_TYPES = new Set(['patchouli:text', 'patchouli:spotlight'])
+const TEXT_PAGE_TYPES = new Set(['patchouli:text', 'patchouli:spotlight', 'text', 'spotlight', 'ability_items'])
 
-function loadCategories(): Map<string, BookCategory> {
+function loadCategories(resolve: GuideLinkResolver): Map<string, BookCategory> {
   const map = new Map<string, BookCategory>()
-  for (const file of walkJsonFiles(PATCHOULI_CATEGORIES_DIR)) {
+  for (const { file } of listResources(GUIDE_CATEGORIES_REL)) {
     const id = path.basename(file, '.json')
     const raw = readJson<RawCategory>(file)
+    if (raw.requires) continue // operator-only (admin commands): not for the public site
     map.set(id, {
       id,
       name: raw.name,
-      description: raw.description ? sanitizePatchouliText(raw.description) : undefined,
-      sortnum: raw.sortnum ?? 9999,
+      description: raw.description ? sanitizeGuideText(raw.description, resolve) : undefined,
+      sortnum: raw.sortnum ?? raw.sort ?? 9999,
       parentId: raw.parent ? stripNamespace(raw.parent) : undefined,
     })
   }
@@ -79,18 +84,21 @@ function loadCategories(): Map<string, BookCategory> {
   return map
 }
 
-function flattenPages(pages: (string | RawPage)[] | undefined, skipCounts: Map<string, number>): string[] {
+function flattenPages(pages: (string | RawPage)[] | undefined, skipCounts: Map<string, number>, resolve: GuideLinkResolver): string[] {
   const blocks: string[] = []
   for (const page of pages ?? []) {
     if (typeof page === 'string') {
-      const text = sanitizePatchouliText(page)
+      const text = sanitizeGuideText(page, resolve)
       if (text) blocks.push(text)
       continue
     }
     const type = page.type ?? 'unknown'
     if (TEXT_PAGE_TYPES.has(type) && page.text) {
-      const text = sanitizePatchouliText(page.text)
+      const text = sanitizeGuideText(page.text, resolve)
       if (text) blocks.push(page.title ? `**${page.title}**\n\n${text}` : text)
+    } else if (type === 'passive_description' && page.description) {
+      const text = sanitizeGuideText(page.description, resolve)
+      if (text) blocks.push(text)
     } else {
       skipCounts.set(type, (skipCounts.get(type) ?? 0) + 1)
     }
@@ -99,7 +107,11 @@ function flattenPages(pages: (string | RawPage)[] | undefined, skipCounts: Map<s
 }
 
 export function exportBook() {
-  const categories = loadCategories()
+  // Links are written as a marker first and resolved once we know which entries survive the
+  // picture-only filter below, so no link points at a page that was never published.
+  const mark: GuideLinkResolver = (target) => `@@${target}@@`
+  const categories = loadCategories(mark)
+  const entryPaths = new Map<string, { categoryId: string; id: string }>() // 'dir/id' -> where it ended up
   const entriesByCategory = new Map<string, BookEntry[]>()
   const skipCounts = new Map<string, number>()
   const emptyByCategory = new Map<string, number>()
@@ -109,8 +121,9 @@ export function exportBook() {
   // Bucket by each entry's own declared `category` field, NOT by which physical subfolder
   // it lives in — those don't always match (e.g. entries/abilities/ + entries/suits/ are
   // plural folder names for the singular categories/ability.json + categories/suit.json).
-  for (const file of walkJsonFiles(PATCHOULI_ENTRIES_DIR)) {
+  for (const { rel, file } of listResources(GUIDE_ENTRIES_REL)) {
     const id = path.basename(file, '.json')
+    const dir = rel.includes('/') ? rel.split('/')[0] : ''
     const raw = readJson<RawEntry>(file)
     const categoryId = raw.category ? stripNamespace(raw.category) : undefined
     if (!categoryId || !categories.has(categoryId)) {
@@ -122,7 +135,7 @@ export function exportBook() {
       id,
       categoryId,
       name: raw.name ?? titleCase(id),
-      textBlocks: flattenPages(raw.pages, skipCounts),
+      textBlocks: flattenPages(raw.pages, skipCounts, mark),
     }
     // Entries with no readable text are picture-only in-game (suit/alt/shiny galleries are
     // rendered 3D models, plus some recipe-only pages). There's nothing to show on the web,
@@ -134,9 +147,31 @@ export function exportBook() {
 
     const list = entriesByCategory.get(categoryId) ?? []
     list.push(entry)
+    entryPaths.set(`${dir}/${id}`, { categoryId, id })
     entriesByCategory.set(categoryId, list)
     total++
   }
+  const resolveFinal = (target: string): string | undefined => {
+    const t = target.replace(/^thematic:/, '')
+    if (t.includes('/')) {
+      const hit = entryPaths.get(t)
+      if (hit) return `/book/${hit.categoryId}/${hit.id}`
+      const [dir, id] = t.split('/')
+      if (dir === 'suits') return `/suits/${id}`
+      if (dir === 'abilities') return `/abilities/${id}`
+      return undefined
+    }
+    if (t === 'suit') return '/suits'
+    if (t === 'ability') return '/abilities'
+    return categories.has(t) ? `/book/${t}` : undefined
+  }
+  const unmark = (text: string) =>
+    text.replace(/\[([^\]]*)\]\(@@(.*?)@@\)/g, (_m, label: string, target: string) => {
+      const href = resolveFinal(target)
+      return href ? `[${label}](${href})` : label
+    })
+  for (const c of categories.values()) if (c.description) c.description = unmark(c.description)
+  for (const entries of entriesByCategory.values()) for (const e of entries) e.textBlocks = e.textBlocks.map(unmark)
   for (const entries of entriesByCategory.values()) entries.sort((a, b) => a.name.localeCompare(b.name))
   if (uncategorized > 0) {
     console.warn(`[export-book] ${uncategorized} entries had no "category" field matching a known categories/*.json — skipped`)

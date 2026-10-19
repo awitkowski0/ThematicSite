@@ -96,7 +96,9 @@ export async function exportAbilities() {
   const abilities: Record<string, AbilityBalance> = {}
   for (const row of abilityRows ?? []) {
     // Header differs between tabs ("thematic:id" on live, "ability_id" on dev).
-    const rawId = row['thematic:id'] ?? row['ability_id'] ?? ''
+    // The live tab's id column header has been "thematic:id", "ability_id" and (2026-10) "wi", so fall
+    // back to the first column, which is always the id.
+    const rawId = row['thematic:id'] ?? row['ability_id'] ?? row['id'] ?? Object.values(row)[0] ?? ''
     if (!rawId) continue
     if ((row['disabled'] ?? '').toUpperCase() === 'TRUE') continue
     const id = rawId.replace(/^thematic:/, '')

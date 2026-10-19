@@ -5,12 +5,12 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { DATA_DIR, OUT_DATA_DIR, readJson, requireSourceExists, stripNamespace, titleCase } from './lib'
+import { DATA, findResource, listResources, OUT_DATA_DIR, readJson, requireSourceExists, stripNamespace, titleCase } from './lib'
 
 requireSourceExists()
 
-const CONFIGURED_FEATURE_DIR = path.join(DATA_DIR, 'worldgen/configured_feature')
-const PLACED_FEATURE_DIR = path.join(DATA_DIR, 'worldgen/placed_feature')
+const CONFIGURED_FEATURE_REL = `${DATA}/worldgen/configured_feature`
+const PLACED_FEATURE_REL = `${DATA}/worldgen/placed_feature`
 
 interface RawConfiguredFeature {
   config?: {
@@ -47,7 +47,8 @@ function splitMaterialAndVariant(id: string): { material: string; variant?: stri
 }
 
 export function exportOres() {
-  if (!fs.existsSync(PLACED_FEATURE_DIR)) {
+  const placedFeatures = listResources(PLACED_FEATURE_REL).filter((f) => !f.rel.includes('/'))
+  if (placedFeatures.length === 0) {
     console.warn('[export-ores] no worldgen/placed_feature directory found — writing an empty ore table')
     fs.mkdirSync(OUT_DATA_DIR, { recursive: true })
     fs.writeFileSync(path.join(OUT_DATA_DIR, 'ores.generated.json'), '[]\n')
@@ -65,14 +66,14 @@ export function exportOres() {
     veinSize?: number
   }[] = []
 
-  for (const file of fs.readdirSync(PLACED_FEATURE_DIR)) {
-    if (!file.startsWith('ore_') || !file.endsWith('.json')) continue
-    const id = path.basename(file, '.json')
-    const placed = readJson<RawPlacedFeature>(path.join(PLACED_FEATURE_DIR, file))
+  for (const { rel, file } of placedFeatures) {
+    if (!rel.startsWith('ore_')) continue
+    const id = path.basename(rel, '.json')
+    const placed = readJson<RawPlacedFeature>(file)
     if (!placed.feature) continue
 
-    const configuredFile = path.join(CONFIGURED_FEATURE_DIR, `${stripNamespace(placed.feature)}.json`)
-    const configured = fs.existsSync(configuredFile) ? readJson<RawConfiguredFeature>(configuredFile) : undefined
+    const configuredFile = findResource(`${CONFIGURED_FEATURE_REL}/${stripNamespace(placed.feature)}.json`)
+    const configured = configuredFile ? readJson<RawConfiguredFeature>(configuredFile) : undefined
 
     const heightStep = placed.placement?.find((s) => s.type === 'minecraft:height_range')
     const countStep = placed.placement?.find((s) => s.type === 'minecraft:count')

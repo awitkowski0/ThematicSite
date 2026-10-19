@@ -3,7 +3,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 
-import { RECIPES_DIR, readJson, walkJsonFiles, stripNamespace } from './lib'
+import { RECIPES_REL, DATA, findResource, listResources, readJson, stripNamespace } from './lib'
 
 interface RawIngredientRef {
   item?: string
@@ -14,7 +14,9 @@ interface RawIngredientRef {
   count?: number
 }
 
-type RawIngredientEntry = RawIngredientRef | RawIngredientRef[]
+// Older recipes wrote ingredients as {item|id|tag} objects; the current ones use a bare id string,
+// with a leading # for a tag ("#minecraft:buttons").
+type RawIngredientEntry = RawIngredientRef | string | (RawIngredientRef | string)[]
 
 interface RawRecipe {
   type?: string
@@ -42,6 +44,7 @@ export interface RecipeIndexEntry {
 function refId(ref: RawIngredientEntry | undefined): string | undefined {
   if (!ref) return undefined
   const single = Array.isArray(ref) ? ref[0] : ref
+  if (typeof single === 'string') return single
   // A tag slot accepts any item in that tag; surface it as `#tag` so the site can say
   // "any charred log" rather than dropping the ingredient entirely.
   if (single?.tag) return `#${single.tag}`
@@ -77,7 +80,10 @@ function extractIngredients(raw: RawRecipe): ResolvedIngredient[] {
       add(refId(ref), symbolCounts.get(symbol) ?? 0)
     }
   } else if (raw.ingredients) {
-    for (const entry of raw.ingredients) add(refId(entry), 1)
+    for (const entry of raw.ingredients) {
+      const single = Array.isArray(entry) ? entry[0] : entry
+      add(refId(entry), typeof single === 'object' && single ? refCount(single) : 1)
+    }
   } else if (raw.ingredient) {
     add(refId(raw.ingredient), 1)
   } else if (raw.input1 || raw.input2 || raw.input3) {
@@ -97,8 +103,9 @@ function extractIngredients(raw: RawRecipe): ResolvedIngredient[] {
 // different question ("what recipe produces item X", used for the recursive ingredient
 // drill-down where all we have is an item id, not a recipe id).
 export function resolveRecipeById(recipeIdentifier: string): ResolvedIngredient[] | undefined {
-  const file = path.join(RECIPES_DIR, `${stripNamespace(recipeIdentifier)}.json`)
-  if (!fs.existsSync(file)) return undefined
+  const bare = stripNamespace(recipeIdentifier)
+  const file = findResource(`${DATA}/recipe/${bare}.json`, `${DATA}/recipes/${bare}.json`)
+  if (!file) return undefined
   const raw = readJson<RawRecipe>(file)
   const ingredients = extractIngredients(raw)
   return ingredients.length > 0 ? ingredients : undefined
@@ -113,7 +120,7 @@ export function resolveRecipeById(recipeIdentifier: string): ResolvedIngredient[
 // minecraft:arrow (which has no recipe file at all, and correctly resolves as a raw item).
 export function buildRecipeIndex(): Map<string, RecipeIndexEntry> {
   const byResult = new Map<string, RecipeIndexEntry[]>()
-  for (const file of walkJsonFiles(RECIPES_DIR)) {
+  for (const { file } of listResources(RECIPES_REL)) {
     const raw = readJson<RawRecipe>(file)
     const resultId = extractResultId(raw)
     if (!resultId) continue
