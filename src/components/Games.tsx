@@ -53,8 +53,6 @@ export function PlayerLink({ name }: { name: string }) {
   )
 }
 
-const SERVER_TEXT = { up: 'Games server is up.', starting: 'Games server is starting.', down: 'Games server is down. Queues open when it is back.' }
-
 export function QueuesAndMatches() {
   const { data, error, loading } = useGames<GamesStatus>('/status')
   const now = useNow()
@@ -69,18 +67,18 @@ export function QueuesAndMatches() {
       {error && <p className={muted}>Could not refresh just now. Showing the last update.</p>}
       <section>
         <h2 className="text-xl font-semibold">Queues</h2>
-        <p className={`mt-1 ${muted}`}>
-          {SERVER_TEXT[data.games_server] ?? ''} {data.online} online.
-        </p>
-        {data.modes.length === 0 ? (
+        <p className={`mt-1 ${muted}`}>{data.online} online.</p>
+        {data.modes.filter((m) => m.queueable).length === 0 ? (
           <p className={`mt-3 ${muted}`}>No game modes are open yet. Each mode will show here with how many players are waiting.</p>
         ) : (
           <ul className="mt-3 grid gap-3 sm:grid-cols-2">
-            {data.modes.map((m) => (
+            {data.modes.filter((m) => m.queueable).map((m) => (
               <li key={m.id} className={box}>
                 <div className="flex items-baseline justify-between gap-2">
                   <h3 className="font-semibold">{m.name}</h3>
-                  {!m.queueable && <span className="rounded-full border border-neutral-300 px-2 py-0.5 text-xs text-neutral-500 dark:border-neutral-700 dark:text-neutral-400">Closed</span>}
+                  <Link to="/play" className="rounded-md bg-neutral-900 px-2.5 py-1 text-xs text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+                    Join
+                  </Link>
                 </div>
                 <p className="mt-1 text-sm tabular-nums">
                   {m.waiting} / {m.players_needed} waiting
