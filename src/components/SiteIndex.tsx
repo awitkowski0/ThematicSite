@@ -13,6 +13,7 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
   { to: '/mechanics', title: 'Mechanics', description: 'Rarity, shinies, keybinds, and where ores spawn.' },
   { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
   { to: '/server', title: 'Server', description: 'Join address, who is online, and the leaderboards.' },
+  { to: '/games', title: 'Games', description: 'Queues, live matches, and game mode leaderboards.' },
   { to: '/faq', title: 'FAQ', description: 'Common questions about installing and playing.' },
 ]
 

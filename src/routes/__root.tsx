@@ -61,6 +61,9 @@ function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
             <Link to="/server" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
               Server
             </Link>
+            <Link to="/games" className="text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100">
+              Games
+            </Link>
             <Link
               to="/play"
               className="ml-auto rounded-md bg-neutral-900 px-3 py-1.5 text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
