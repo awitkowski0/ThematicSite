@@ -68,6 +68,7 @@ export function QueuesAndMatches() {
       <section>
         <h2 className="text-xl font-semibold">Queues</h2>
         <p className={`mt-1 ${muted}`}>{data.online} online.</p>
+        <p className={`mt-1 ${muted}`}>Queue from the tablet in game, or from the Games button on the title screen.</p>
         {data.modes.filter((m) => m.queueable).length === 0 ? (
           <p className={`mt-3 ${muted}`}>No game modes are open yet. Each mode will show here with how many players are waiting.</p>
         ) : (
@@ -108,8 +109,15 @@ export function QueuesAndMatches() {
                   {m.started_at ? `Started ${timeSince(m.started_at, now)} ago` : 'Not started'}
                   {m.score_line ? ` · ${m.score_line}` : ''}
                 </p>
+                {(Number(m.watchers) > 0 || m.late_join === true) && (
+                  <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
+                    {Number(m.watchers) > 0 ? `${Number(m.watchers)} watching` : ''}
+                    {Number(m.watchers) > 0 && m.late_join === true ? ' · ' : ''}
+                    {m.late_join === true ? 'Open to join' : ''}
+                  </p>
+                )}
                 <p className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm">
-                  {m.players.map((p) => (
+                  {(m.players ?? []).map((p) => (
                     <PlayerLink key={p.uuid} name={p.name} />
                   ))}
                 </p>

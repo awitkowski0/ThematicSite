@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 // Types for the games API (Serv, /api/games/v1). The site proxies it at /api/games/v1.
-export type GameMode = { id: string; name: string; team_size: number; players_needed: number; waiting: number; queueable: boolean }
+export type GameMode = { id: string; name: string; team_size: number; players_needed: number; waiting: number; queueable: boolean; kits?: boolean }
 export type LivePlayer = { uuid: string; name: string; team: number | null }
 export type LiveMatch = {
   match_id: string
@@ -11,6 +11,8 @@ export type LiveMatch = {
   started_at: string | null
   score_line: string | null
   players: LivePlayer[]
+  watchers?: number
+  late_join?: boolean
 }
 export type GamesStatus = { updated: string; online: number; games_server: 'up' | 'starting' | 'down'; modes: GameMode[]; live: LiveMatch[] }
 
