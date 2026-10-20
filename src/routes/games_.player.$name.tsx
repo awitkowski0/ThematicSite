@@ -2,7 +2,7 @@ import { Link, createFileRoute } from '@tanstack/react-router'
 
 import { PlayerSearch, PlayerStatsView } from '../components/Games'
 
-export const Route = createFileRoute('/games/player/$name')({
+export const Route = createFileRoute('/games_/player/$name')({
   head: ({ params }) => ({
     meta: [{ title: `${params.name} — Games — Thematic` }, { name: 'description', content: `Game stats and recent matches for ${params.name}.` }],
   }),
