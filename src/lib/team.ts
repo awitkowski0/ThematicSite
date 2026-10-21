@@ -10,7 +10,7 @@ export interface TeamMember {
 // Bump this by hand whenever the lists below change — it's the date shown under the
 // credits. Deliberately NOT the build date, which would keep "updating" on every
 // unrelated deploy and imply the roster was reviewed when it wasn't.
-export const TEAM_LAST_UPDATED = '2026-07-27'
+export const TEAM_LAST_UPDATED = '2026-10-20'
 
 export const TEAM: TeamMember[] = [
   { username: 'funalex', roles: ['Developer'] },
@@ -20,13 +20,13 @@ export const TEAM: TeamMember[] = [
   { username: 'soanoki', roles: ['Developer'] },
   { username: 'qualnard1_', roles: ['Animator'] },
   { username: 'bardock1_', roles: ['Community Manager'] },
-  { username: 'halflime_', roles: ['Builder'] },
+  { username: 'wonderman21', roles: ['Modeler'] },
+  { username: 'gre3ves' },
 ]
 
 // Roles are optional here — name a contribution when it's worth calling out, otherwise
 // "Contributor" under a heading that already says Contributors is just noise.
 export const CONTRIBUTORS: TeamMember[] = [
-  { username: 'wonderman21', roles: ['Modeler'] },
   { username: 'robin_cosmic', roles: ['Developer'] },
   { username: 'dempsity', roles: ['Sounds'] },
   { username: '_beann', roles: ['Former Builder'] },
@@ -47,7 +47,7 @@ export const SUPPORTERS: TeamMember[] = [
   { username: 'dempsity' },
   { username: 'devcoolfire' },
   { username: 'digitaldesign' },
-  { username: 'halflime_' },
+  { username: 'gre3ves' },
   { username: 'hooper_3000' },
   { username: 'infernal_hulk' },
   { username: 'jcr2k3' },
