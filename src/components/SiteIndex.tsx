@@ -14,6 +14,7 @@ const SECTIONS: { to: string; title: string; description: string }[] = [
   { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
   { to: '/server', title: 'Server', description: 'Join address, who is online, and the leaderboards.' },
   { to: '/games', title: 'Games', description: 'Queues, live matches, and game mode leaderboards.' },
+  { to: '/territories', title: 'Territories', description: 'The weekly guild event live: who holds each Gotham zone, standings and prizes.' },
   { to: '/faq', title: 'FAQ', description: 'Common questions about installing and playing.' },
 ]
 
