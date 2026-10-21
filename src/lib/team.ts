@@ -21,7 +21,7 @@ export const TEAM: TeamMember[] = [
   { username: 'qualnard1_', roles: ['Animator'] },
   { username: 'bardock1_', roles: ['Community Manager'] },
   { username: 'wonderman21', roles: ['Modeler'] },
-  { username: 'gre3ves' },
+  { username: 'gre3ves', roles: ['Modeler'] },
 ]
 
 // Roles are optional here — name a contribution when it's worth calling out, otherwise
