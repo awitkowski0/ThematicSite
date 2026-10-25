@@ -30,6 +30,8 @@ const SPARSE_PATHS = [
   'src/common/resources/assets/thematic/textures/item',
   'src/common/resources/assets/thematic/textures/block',
   'src/packs',
+  // Pack-author docs published under /packs (export-packs.ts).
+  'docs',
 ]
 
 // If the source is not already there and we actually need to clone, never clone into ".."

@@ -43,7 +43,7 @@ function IngredientRow({ ingredient, ancestors }: { ingredient: RecipeIngredient
         <Link
           to="/suits/$id"
           params={{ id: stripNamespace(ingredient.id) }}
-          className="flex items-center gap-2 rounded-md border border-neutral-200 p-2 text-sm hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          className="tb-raised flex items-center gap-2 rounded-md p-2 text-sm"
         >
           {icon}
           {label}
@@ -53,7 +53,7 @@ function IngredientRow({ ingredient, ancestors }: { ingredient: RecipeIngredient
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex w-full items-center gap-2 rounded-md border border-neutral-200 p-2 text-left text-sm hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
+          className="tb-raised flex w-full items-center gap-2 rounded-md p-2 text-left text-sm"
         >
           {icon}
           {label}

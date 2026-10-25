@@ -12,12 +12,12 @@ export const Route = createFileRoute('/mechanics/rarities')({
 })
 
 // Starter/Mythic/Unique exist in the mod's code (ArmorCodec.RarityLevel) but aren't covered
-// anywhere in the in-game guidebook — this is new copy grounded in that code, not ported
+// anywhere in the in-game wiki — this is new copy grounded in that code, not ported
 // from the book like the 5 tiers above it.
 const UNDOCUMENTED_TIERS = [
   {
     name: 'Starter',
-    body: 'Below Common. This is what the starter suits use — you get them rather than craft them, so they sit outside the normal rarity ladder.',
+    body: 'Below Common. Starter suits use it: you are given them rather than crafting them, so they sit outside the normal ladder.',
   },
   {
     name: 'Mythic',
@@ -25,7 +25,7 @@ const UNDOCUMENTED_TIERS = [
   },
   {
     name: 'Unique',
-    body: 'The rarest tier. Only one copy of a Unique suit is meant to exist at a time — if you have it, nobody else does.',
+    body: 'The rarest tier. Only one copy of a Unique suit is meant to exist at a time, so if you have it, nobody else does.',
   },
 ]
 
@@ -37,7 +37,7 @@ function RaritiesPage() {
       <Link to="/mechanics" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
         ← Mechanics
       </Link>
-      <h1 className="mt-2 text-3xl font-bold">Rarities</h1>
+      <h1>Rarities</h1>
 
       <div className="mt-6 space-y-6">
         {entry && <GuidePages pages={entry.pages} />}
@@ -45,7 +45,7 @@ function RaritiesPage() {
 
       <h2 className="mt-10 text-lg font-semibold">Rarer than Legendary</h2>
       <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
-        Three tiers you won't find in the in-game guidebook. They're rare, and mostly turn up through events or admins rather than normal crafting.
+        Three tiers you won't find in the in-game wiki. They're rare, and mostly turn up through events or admins rather than normal crafting.
       </p>
       <ul className="mt-4 space-y-4">
         {UNDOCUMENTED_TIERS.map((tier) => (

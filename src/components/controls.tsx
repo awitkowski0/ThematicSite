@@ -5,14 +5,14 @@ import { RARITIES } from '../lib/combat'
 import { Suit } from '../lib/suits'
 
 export const selectClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
+  'tb-inset mt-1 w-full rounded-md px-2 py-1.5 text-sm outline-none focus:!border-blue-400'
 
 export const inputClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm tabular-nums outline-none focus:border-neutral-500 dark:border-neutral-700'
+  'tb-inset mt-1 w-full rounded-md px-2 py-1.5 text-sm tabular-nums outline-none focus:!border-blue-400'
 
 /** Bordered tile used for every "click through to a thing" link across the site. */
 export const cardLinkClass =
-  'block rounded-md border border-neutral-200 p-4 hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600'
+  'tb-raised block rounded-md p-4'
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -78,7 +78,7 @@ export function Range({
         <span className="text-neutral-600 dark:text-neutral-400">{label}</span>
         <span className="font-medium tabular-nums">{format ? format(value) : Math.round(value)}</span>
       </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-blue-600" />
+      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} className="mt-1 w-full accent-accent" />
       {hint && <span className="text-xs text-neutral-500">{hint}</span>}
     </label>
   )

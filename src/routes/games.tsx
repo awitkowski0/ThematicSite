@@ -15,8 +15,8 @@ export const Route = createFileRoute('/games')({
 function GamesPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Games</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1>Games</h1>
+      <p className="text-neutral-400">
         Queues, live matches and leaderboards for the Thematic game modes. Updates every 10 seconds. To play, join the{' '}
         <Link to="/server" className="text-blue-600 hover:underline dark:text-blue-400">
           server

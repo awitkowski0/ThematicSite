@@ -439,7 +439,7 @@ function entryHref(lib: Library, e: Entry): string {
     const suit = suits.get(e.slug)
     if (suit && !suit.wip) return `/suits/${e.slug}`
   }
-  return `/book/${cat?.slug ?? stripNamespace(e.category)}/${e.slug}`
+  return `/wiki/${cat?.slug ?? stripNamespace(e.category)}/${e.slug}`
 }
 
 type LinkResult = { href: string } | { dead: 'op' | 'missing' }
@@ -459,7 +459,7 @@ function resolveTarget(lib: Library, target: string, ns: string): LinkResult {
     return { href: entryHref(lib, entry) + anchor }
   }
   const cat = lib.categories.get(id)
-  if (cat) return { href: `/book/${cat.slug}` }
+  if (cat) return { href: `/wiki/${cat.slug}` }
   const a = lib.anchors.get(id)
   if (a) {
     const holder = lib.entries.get(a.entry)

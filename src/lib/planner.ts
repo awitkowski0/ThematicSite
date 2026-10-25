@@ -135,7 +135,7 @@ function sourceFor(itemId: string, craftable: boolean): MaterialSource {
   if (ore) return ore
   if (craftable) return { kind: 'crafted', detail: 'Made from other materials — see its recipe' }
   if (isVanilla(itemId)) return { kind: 'vanilla', detail: 'Vanilla Minecraft item' }
-  return { kind: 'unknown', detail: 'Found in world or dropped — check the guidebook' }
+  return { kind: 'unknown', detail: 'Found in world or dropped — check the wiki' }
 }
 
 export interface PlanResult {

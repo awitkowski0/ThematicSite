@@ -29,18 +29,18 @@ function PeopleGrid({ people }: { people: TeamMember[] }) {
 export function Credits() {
   return (
     <>
-      <section className="mt-10 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-        <h2 className="text-lg font-semibold">Team</h2>
+      <section className="mt-10 border-t border-neutral-800 pt-6">
+        <h2>Team</h2>
         <PeopleGrid people={TEAM} />
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold">Contributors</h2>
+        <h2>Contributors</h2>
         <PeopleGrid people={CONTRIBUTORS} />
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold">Supporters</h2>
+        <h2>Supporters</h2>
         <p className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Thanks to everyone supporting the server.</p>
         <ul className="mt-4 flex flex-wrap gap-x-4 gap-y-2">
           {SUPPORTERS.map((member) => (

@@ -3,6 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { abilityBalances } from '../lib/abilityStats'
 import { AbilitySlot, getSuit, releasedSuits } from '../lib/suits'
+import { getCategory } from '../lib/book'
 import { RaritySelect, SuitSelect } from '../components/controls'
 import { abilityDamage, actualCooldown, formatDuration, hitsPerUse, isDamagingAbility, statValue, timeToKill } from '../lib/combat'
 
@@ -13,8 +14,22 @@ export const Route = createFileRoute('/abilities')({
       { name: 'description', content: 'Every Thematic ability with its damage, cooldown, duration, and range, plus what it actually does to a real suit.' },
     ],
   }),
+  validateSearch: (search: Record<string, unknown>): { q?: string } => (typeof search.q === 'string' && search.q ? { q: search.q } : {}),
   component: AbilitiesPage,
 })
+
+const bookAbilities = new Set(getCategory('ability')?.entries.map((e) => e.id) ?? [])
+
+/** The slot filters, in the order a suit lists its moves. */
+const SLOT_FILTERS: { label: string; slots?: AbilitySlot[] }[] = [
+  { label: 'All' },
+  { label: 'Moves', slots: ['active', 'equip', 'unknown'] },
+  { label: 'Ultimates', slots: ['ultimate'] },
+  { label: 'Passives', slots: ['passive'] },
+  { label: 'Utility', slots: ['utility', 'cosmetic'] },
+]
+
+const plainName = (name: string) => name.replace(/^\[[A-Z]+\]\s*/, '')
 
 interface Row {
   id: string
@@ -67,7 +82,7 @@ function buildRows(): Row[] {
       const atk = attacks.get(id)
       return {
         id,
-        name: m.name,
+        name: plainName(m.name),
         slot: m.slot,
         description: m.description,
         damage: balance?.damage,
@@ -83,7 +98,7 @@ function buildRows(): Row[] {
 }
 
 function Num({ value, suffix }: { value?: number; suffix?: string }) {
-  if (value === undefined) return <span className="text-neutral-400 dark:text-neutral-600">—</span>
+  if (value === undefined) return <span className="text-neutral-600">—</span>
   return (
     <span className="tabular-nums">
       {value}
@@ -96,7 +111,9 @@ function AbilitiesPage() {
   const rows = useMemo(buildRows, [])
   const defenders = useMemo(() => releasedSuits((s) => statValue(s, 'defense', 0) !== undefined), [])
 
-  const [query, setQuery] = useState('')
+  const { q } = Route.useSearch()
+  const [query, setQuery] = useState(q ?? '')
+  const [slotFilter, setSlotFilter] = useState(0)
   const [damageOnly, setDamageOnly] = useState(false)
   const [ignoreAlts, setIgnoreAlts] = useState(true)
   const [defenderId, setDefenderId] = useState('batman')
@@ -109,7 +126,9 @@ function AbilitiesPage() {
   const assumedUtility = 50
 
   const normalized = query.trim().toLowerCase()
+  const slots = SLOT_FILTERS[slotFilter].slots
   const filtered = rows.filter((r) => {
+    if (slots && !slots.includes(r.slot)) return false
     if (damageOnly && !isDamagingAbility(r.slot, r.damage, r.name)) return false
     if (!normalized) return true
     const names = ignoreAlts ? r.characterNames : r.suitNames
@@ -118,28 +137,28 @@ function AbilitiesPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Abilities</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Every ability in Thematic, what it does, and what it actually lands for against a real suit. To pit two suits against each other, use the{' '}
-        <Link to="/matchup" className="text-blue-600 hover:underline dark:text-blue-400">
-          matchup simulator
+      <h1>Abilities</h1>
+      <p className="text-neutral-400">
+        What every ability does, and what it lands for against a real suit. For a whole fight, use the{' '}
+        <Link to="/matchup" className="text-blue-400 hover:underline">
+          matchup
         </Link>
-        ; for a single hit, the{' '}
-        <Link to="/mechanics/stats" className="text-blue-600 hover:underline dark:text-blue-400">
+        ; for one hit, the{' '}
+        <Link to="/mechanics/stats" className="text-blue-400 hover:underline">
           damage calculator
         </Link>
         .
       </p>
 
-      <div className="mt-6 flex flex-wrap items-end gap-4">
+      <div className="tb-raised mt-6 flex flex-wrap items-end gap-x-5 gap-y-3 rounded-md p-4">
         <label className="block">
-          <span className="text-sm text-neutral-600 dark:text-neutral-400">Search</span>
+          <span className="text-sm text-neutral-400">Search</span>
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ability or suit…"
-            className="mt-1 block w-56 rounded-md border border-neutral-300 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700"
+            className="tb-inset mt-1 block w-56 rounded-md px-3 py-1.5 text-sm outline-none focus:!border-blue-400"
           />
         </label>
         <div className="w-48">
@@ -148,34 +167,45 @@ function AbilitiesPage() {
         <div className="w-36">
           <RaritySelect label="Their rarity" iv={defenderIv} onChange={setDefenderIv} />
         </div>
-        <div className="flex flex-col gap-1 pb-1">
-          <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-            <input type="checkbox" checked={damageOnly} onChange={(e) => setDamageOnly(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
+        <div className="flex flex-col gap-1 pb-1 text-sm text-neutral-400">
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={damageOnly} onChange={(e) => setDamageOnly(e.target.checked)} className="h-4 w-4 accent-accent" />
             Only ones that deal damage
           </label>
-          <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-            <input type="checkbox" checked={ignoreAlts} onChange={(e) => setIgnoreAlts(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={ignoreAlts} onChange={(e) => setIgnoreAlts(e.target.checked)} className="h-4 w-4 accent-accent" />
             Count characters, not alts
           </label>
         </div>
       </div>
 
-      <p className="mt-3 text-sm text-neutral-500">
-        {filtered.length} of {rows.length} abilities · vs {defender?.name ?? 'suit'} at Defense {defense}
-      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
+        {SLOT_FILTERS.map((f, i) => (
+          <button
+            key={f.label}
+            type="button"
+            aria-pressed={i === slotFilter}
+            onClick={() => setSlotFilter(i)}
+            className={`rounded-md px-2.5 py-1 ${i === slotFilter ? 'bg-pressed text-white' : 'text-neutral-400 hover:text-white'}`}
+          >
+            {f.label}
+          </button>
+        ))}
+        <span className="ml-auto text-neutral-500">
+          {filtered.length} of {rows.length} · vs {defender?.name ?? 'suit'} at Defense {defense}
+        </span>
+      </div>
 
       <div className="mt-4 overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+        <table className="tb-table">
           <thead>
-            <tr className="border-b border-neutral-200 text-left dark:border-neutral-800">
-              <th className="py-2 pr-4 font-medium">Ability</th>
-              <th className="py-2 pr-4 font-medium">Base dmg</th>
-              <th className="py-2 pr-4 font-medium">
-                Hit on {defender?.name ?? 'target'}
-              </th>
-              <th className="py-2 pr-4 font-medium">Cooldown</th>
-              <th className="py-2 pr-4 font-medium">Time to kill</th>
-              <th className="py-2 font-medium">Range</th>
+            <tr>
+              <th>Ability</th>
+              <th>Base dmg</th>
+              <th>Hit on {defender?.name ?? 'target'}</th>
+              <th>Cooldown</th>
+              <th>Time to kill</th>
+              <th>Range</th>
             </tr>
           </thead>
           <tbody>
@@ -185,10 +215,19 @@ function AbilitiesPage() {
               const cd = row.cooldown !== undefined ? actualCooldown(row.cooldown, assumedUtility, row.slot === 'ultimate') : undefined
               const ttk = result && cd !== undefined ? timeToKill(result.hitsToKill, cd) : undefined
               return (
-                <tr key={row.id} className="border-b border-neutral-100 align-top dark:border-neutral-900">
-                  <td className="py-3 pr-4">
-                    <div className="font-medium">{row.name}</div>
-                    {row.description && <div className="mt-0.5 max-w-prose text-xs text-neutral-600 dark:text-neutral-400">{row.description}</div>}
+                <tr key={row.id}>
+                  <td className="py-3">
+                    <div className="flex items-baseline gap-2">
+                      {bookAbilities.has(row.id) ? (
+                        <a href={`/wiki/ability/${row.id}`} className="font-semibold text-white hover:underline">
+                          {row.name}
+                        </a>
+                      ) : (
+                        <span className="font-semibold text-white">{row.name}</span>
+                      )}
+                      <span className="text-[11px] uppercase tracking-wider text-neutral-500">{row.slot}</span>
+                    </div>
+                    {row.description && <div className="mt-0.5 max-w-prose text-xs text-neutral-400">{row.description}</div>}
                     {(() => {
                       const names = ignoreAlts ? row.characterNames : row.suitNames
                       if (names.length === 0) return null
@@ -200,21 +239,21 @@ function AbilitiesPage() {
                       )
                     })()}
                   </td>
-                  <td className="py-3 pr-4">
+                  <td className="py-3">
                     <Num value={row.damage} />
                   </td>
-                  <td className="py-3 pr-4">
+                  <td className="py-3">
                     {result ? (
                       <>
-                        <div className="font-medium tabular-nums">{result.displayed.toFixed(0)}</div>
+                        <div className="font-semibold text-white">{result.displayed.toFixed(0)}</div>
                         <div className="text-xs text-neutral-500">{result.hitsToKill} uses{hits > 1 ? ` · ${hits} hits each` : ''}</div>
                       </>
                     ) : (
-                      <span className="text-neutral-400 dark:text-neutral-600">—</span>
+                      <span className="text-neutral-600">—</span>
                     )}
                   </td>
-                  <td className="py-3 pr-4">{cd !== undefined ? <span className="tabular-nums">{cd.toFixed(1)}s</span> : <Num />}</td>
-                  <td className="py-3 pr-4">{ttk !== undefined ? <span className="tabular-nums">{formatDuration(ttk)}</span> : <Num />}</td>
+                  <td className="py-3">{cd !== undefined ? <span className="tabular-nums">{cd.toFixed(1)}s</span> : <Num />}</td>
+                  <td className="py-3">{ttk !== undefined ? <span className="tabular-nums">{formatDuration(ttk)}</span> : <Num />}</td>
                   <td className="py-3">
                     <Num value={row.range} />
                   </td>
@@ -226,14 +265,14 @@ function AbilitiesPage() {
       </div>
 
       <div className="mt-6 space-y-1 text-xs text-neutral-500">
-        <p>A dash means the value doesn't apply — a passive has no cooldown, a buff deals no damage.</p>
+        <p>A dash means the value doesn't apply: a passive has no cooldown, and a buff deals no damage.</p>
         <p>
           "Hit on {defender?.name ?? 'target'}" uses the average Attack of the suits that carry each ability, on the same scale the in-game health bar shows
           (a full bar reads 1000).
         </p>
         <p>
-          Time to kill assumes every hit lands and you re-use the ability the moment it's off cooldown, at a middling Utility roll — a floor, not what a real
-          fight looks like.
+          Time to kill assumes every hit lands and you re-use the ability the moment it's off cooldown, at a middling Utility roll. Treat it as a floor;
+          real fights take longer.
         </p>
       </div>
     </div>

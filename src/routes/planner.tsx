@@ -17,7 +17,7 @@ export const Route = createFileRoute('/planner')({
 })
 
 const selectClass =
-  'mt-1 w-full rounded-md border border-neutral-300 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
+  'mt-1 w-full tb-inset rounded-md px-2 py-1.5 text-sm outline-none focus:!border-blue-400'
 
 const SOURCE_STYLES: Record<string, string> = {
   ore: 'text-amber-700 dark:text-amber-500',
@@ -92,14 +92,14 @@ function PlannerPage() {
   return (
     <div>
       <div className="flex items-baseline justify-between gap-4">
-        <h1 className="text-3xl font-bold">Craft planner</h1>
+        <h1>Craft planner</h1>
         <button type="button" onClick={share} className="text-xs text-blue-600 hover:underline dark:text-blue-400">
           {copied ? 'Link copied' : 'Share this plan'}
         </button>
       </div>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Planning a shiny grind, or just a batch? Pick a suit and how many you want, and this works out every material — including the base suit if you're
-        making an alt — and where to go get it.
+      <p className="text-neutral-400">
+        Pick a suit and how many you want. The planner adds up every material, including the base suit when you are making an alt, and says where to find
+        each one.
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -144,7 +144,7 @@ function PlannerPage() {
               </p>
             )}
             <p className="mt-3 text-xs text-neutral-500">
-              Every craft is an independent {(SHINY_CHANCE * 100).toFixed(0)}% roll — no pity, and past failures don't improve your next one. Server admins can
+              Every craft is its own {(SHINY_CHANCE * 100).toFixed(0)}% roll. There is no pity counter, so misses don't raise your next chance. Server admins can
               change the rate with the <code>shinyChance</code> gamerule.{' '}
               <Link to="/mechanics/shiny" className="text-blue-600 hover:underline dark:text-blue-400">
                 How shinies work
@@ -175,7 +175,7 @@ function PlannerPage() {
             <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
               {expand
                 ? 'Everything broken down as far as recipes go, for all ' + qty + ' suits.'
-                : 'Just the top-level ingredients — tick the box above to break these down further.'}
+                : "The recipe's own ingredients. Tick the box above to break them down further."}
             </p>
             <ul className="mt-3">
               {(expand ? plan.raw : plan.direct).map((need) => (
@@ -199,7 +199,7 @@ function PlannerPage() {
                   ))}
               </ul>
               <p className="mt-3 text-xs text-neutral-500">
-                Ore depths come from the mod's own worldgen; structure and mob drops are from the in-game guidebook.{' '}
+                Ore depths come from the mod's own worldgen; structure and mob drops are from the in-game wiki.{' '}
                 <Link to="/mechanics/ores" className="text-blue-600 hover:underline dark:text-blue-400">
                   Full ore table
                 </Link>
@@ -208,7 +208,7 @@ function PlannerPage() {
           )}
 
           <p className="mt-8 text-xs text-neutral-500">
-            Counts assume nothing is wasted and every craft succeeds. Recipes come from the mod itself — see{' '}
+            Counts assume nothing is wasted and every craft succeeds. Recipes come from the mod itself; see{' '}
             <Link to="/suits/$id" params={{ id: suit.id }} className="text-blue-600 hover:underline dark:text-blue-400">
               {suit.name}'s page
             </Link>{' '}

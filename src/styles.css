@@ -1,22 +1,302 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* The site wears the in-game tablet's wiki screen (GuideDraw's TABLET palette), which is dark only: every dark: variant always applies. */
+@custom-variant dark (&);
+
 @theme {
   --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: "Silkscreen", ui-monospace, monospace;
+
+  /* Pixel-crisp corners, as the tablet draws them. */
+  --radius-sm: 1px;
+  --radius: 2px;
+  --radius-md: 2px;
+  --radius-lg: 3px;
+  --radius-xl: 4px;
+
+  /* The tablet's greys, darkest last: ink, muted ink, faint ink, scrollbar, divider, inset edge, raised face, list pane. */
+  --color-neutral-50: #ffffff;
+  --color-neutral-100: #e6e9ef;
+  --color-neutral-200: #c9ced8;
+  --color-neutral-300: #a3abba;
+  --color-neutral-400: #a3abba;
+  --color-neutral-500: #8a92a3;
+  --color-neutral-600: #59637a;
+  --color-neutral-700: #3a4152;
+  --color-neutral-800: #2a303c;
+  --color-neutral-900: #1f2430;
+  --color-neutral-950: #12151c;
+
+  /* Link blue, caption yellow and hero red. */
+  --color-blue-300: #a8d4ff;
+  --color-blue-400: #6fb7ff;
+  --color-blue-500: #6fb7ff;
+  --color-blue-600: #6fb7ff;
+  --color-blue-700: #a8d4ff;
+  --color-amber-300: #ffe066;
+  --color-amber-400: #ffc93c;
+  --color-amber-500: #ffc93c;
+  --color-amber-600: #ffc93c;
+
+  --color-paper: #161a22;
+  --color-paper-shade: #12151c;
+  --color-header: #1b1f29;
+  --color-inset: #0d1015;
+  --color-raised: #1f2430;
+  --color-hover-row: #262c3a;
+  --color-pressed: #2a3550;
+  --color-divider: #3a4152;
+  --color-accent: #e23b3b;
+  --color-selected: #ffc93c;
+  --color-caption: #ffe066;
+  --color-ink-black: #0a0a0c;
+  --color-newsprint: #f2e8d2;
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: dark;
+  background: #0e1018;
 }
 
-/* Guidebook text: colours from the guide's markup come with a light-theme and a dark-theme value. */
-.gc {
-  color: var(--gc-l);
+body {
+  background: linear-gradient(#1a1f2e, #0e1018) fixed;
+  color: var(--color-neutral-100);
 }
-@media (prefers-color-scheme: dark) {
-  .gc {
-    color: var(--gc-d);
-  }
+
+::selection {
+  background: var(--color-pressed);
+}
+
+/* Page titles: the slanted red name banner, in caps, with a hard ink edge and shadow. */
+.tb-banner,
+main h1:not(.tb-plain) {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0.6rem 1.25rem 0.4rem;
+  padding: 0.45rem 1rem 0.35rem;
+  font-family: var(--font-pixel);
+  font-size: clamp(1.15rem, 3.2vw, 1.6rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+}
+.tb-banner::before,
+main h1:not(.tb-plain)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--color-accent);
+  border: 2px solid var(--color-ink-black);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 0.67);
+  transform: skewX(-12deg);
+}
+main h1:not(.tb-plain) a {
+  color: inherit;
+}
+
+/* Section headings: the yellow caps labels the dossier uses. */
+main h2:not(.tb-plain) {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-selected);
+}
+main h3 {
+  color: #fff;
+}
+
+/* The tablet intro's wordmark: white caps with an ink edge, on a burst of red and yellow halftone dots. */
+.tb-logo {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  margin: -0.5rem 0 1.5rem;
+  padding: 2.75rem 0;
+  font-family: var(--font-pixel);
+  font-size: clamp(2.5rem, 9vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: -2px 0 0 #0a0a0c, 2px 0 0 #0a0a0c, 0 -2px 0 #0a0a0c, 0 2px 0 #0a0a0c, 4px 4px 0 #0a0a0c;
+}
+.tb-logo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle, rgb(255 201 60 / 0.8) 1.6px, transparent 2px) 0 0 / 9px 9px,
+    radial-gradient(circle, rgb(226 59 59 / 0.7) 1.6px, transparent 2px) 4.5px 4.5px / 9px 9px;
+  -webkit-mask-image: radial-gradient(ellipse 45% 50% at center, #000 15%, transparent 70%);
+  mask-image: radial-gradient(ellipse 45% 50% at center, #000 15%, transparent 70%);
+}
+
+/* A small yellow caps label over a value or a group, as the dossier labels its facts. */
+.tb-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-selected);
+}
+
+/* A data table: caps header, hairline rows, numbers in columns. */
+.tb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.tb-table th {
+  padding: 0.4rem 1rem 0.4rem 0;
+  border-bottom: 1px solid var(--color-divider);
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+.tb-table td {
+  padding: 0.5rem 1rem 0.5rem 0;
+  border-bottom: 1px solid var(--color-neutral-800);
+  vertical-align: top;
+}
+
+/* An item slot, as the game draws one. */
+.tb-slot {
+  background: #0a0c10;
+  border: 1px solid;
+  border-color: #07090c #2a303c #2a303c #07090c;
+}
+
+/* What a page can only show in game: one quiet line. */
+.tb-note {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--color-neutral-500);
+}
+
+/* A small yellow chip, like the banner's TIER tag. */
+.tb-chip {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--color-ink-black);
+  background: var(--color-caption);
+  color: var(--color-ink-black);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The comic caption: dark text in a yellow box with an ink border and hard shadow. */
+.tb-caption {
+  border: 2px solid var(--color-ink-black);
+  background: var(--color-caption);
+  color: var(--color-ink-black);
+  box-shadow: 3px 3px 0 rgb(0 0 0 / 0.67);
+  padding: 0.6rem 0.8rem;
+}
+.tb-caption a {
+  color: #22408c;
+  text-decoration: underline;
+}
+
+/* A figure panel: newsprint in an ink border, a burst of halftone dots behind its subject. */
+.tb-panel {
+  position: relative;
+  border: 3px solid var(--color-ink-black);
+  box-shadow: 4px 4px 0 rgb(0 0 0 / 0.67);
+  background:
+    radial-gradient(circle, rgb(226 59 59 / 0.55) 1.3px, transparent 1.6px) 0 0 / 8px 8px,
+    var(--color-newsprint);
+  color: var(--color-ink-black);
+}
+.tb-panel::before {
+  /* fades the dots out toward the edges so they read as a burst */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 25%, var(--color-newsprint) 75%);
+  pointer-events: none;
+}
+.tb-panel > * {
+  position: relative;
+}
+
+/* A row or card standing out of the page; hover lightens it. */
+.tb-raised {
+  background: var(--color-raised);
+  border: 1px solid;
+  border-color: #2c3342 #0c0e13 #0c0e13 #2c3342;
+  transition: background-color 0.1s;
+}
+a.tb-raised:hover,
+button.tb-raised:hover {
+  background: var(--color-hover-row);
+}
+
+/* A recess in the page, for data blocks and inputs. */
+.tb-inset {
+  background: var(--color-inset);
+  border: 1px solid;
+  border-color: #07090c #2a303c #2a303c #07090c;
+  box-shadow: inset 1px 1px 0 #0a0c10;
+}
+
+/* The red action button. */
+.tb-button {
+  display: inline-block;
+  border-radius: var(--radius-md);
+  background: var(--color-accent);
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.1s;
+}
+.tb-button:hover {
+  background: #f05050;
+}
+
+/* Markdown on the dark page. */
+.prose {
+  --tw-prose-invert-body: var(--color-neutral-100);
+  --tw-prose-invert-headings: #fff;
+  --tw-prose-invert-bold: #fff;
+  --tw-prose-invert-links: var(--color-blue-400);
+  --tw-prose-invert-bullets: var(--color-accent);
+  --tw-prose-invert-counters: var(--color-neutral-400);
+  --tw-prose-invert-hr: var(--color-divider);
+  --tw-prose-invert-quotes: var(--color-neutral-100);
+  --tw-prose-invert-quote-borders: var(--color-selected);
+  --tw-prose-invert-code: var(--color-caption);
+  --tw-prose-invert-th-borders: var(--color-divider);
+  --tw-prose-invert-td-borders: var(--color-neutral-800);
+}
+
+/* Linked images in Markdown (a row of buttons) sit side by side, as the listings show them. */
+.prose a > img {
+  display: inline-block;
+  margin: 0 0.25rem 0.25rem 0;
+}
+.prose a:has(> img) {
+  text-decoration: none;
+}
+
+/* Guidebook text: colours from the guide's markup come with a light-theme and a dark-theme value; the site is always dark. */
+.gc {
+  color: var(--gc-d);
 }
 .gtip {
   position: relative;
@@ -33,9 +313,11 @@ html {
   width: max-content;
   max-width: min(18rem, 80vw);
   padding: 0.25rem 0.5rem;
-  border-radius: 0.375rem;
-  background: #171717;
-  color: #fafafa;
+  border: 1px solid #000;
+  border-top-color: var(--color-divider);
+  border-radius: var(--radius-md);
+  background: #0e1118;
+  color: #fff;
   font-size: 0.75rem;
   line-height: 1.25;
   opacity: 0;

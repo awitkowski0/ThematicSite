@@ -60,6 +60,10 @@ export interface Suit {
   recipe?: RecipeIngredient[]
   texturePath?: string
   shinyTexturePath?: string
+  /** Bedrock geo for the 3D figure, resolved like the game does. */
+  geoPath?: string
+  /** Bones the figure leaves out at rest. */
+  hiddenBones?: string[]
 }
 
 export interface CollectionMeta {

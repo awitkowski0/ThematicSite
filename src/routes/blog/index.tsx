@@ -7,7 +7,7 @@ import { formatDate } from '../../lib/format'
 
 export const Route = createFileRoute('/blog/')({
   head: () => ({
-    meta: [{ title: 'Changelog — Thematic' }, { name: 'description', content: 'Release notes for every Thematic version, pulled straight from the mod\'s own changelog history.' }],
+    meta: [{ title: 'Changelog — Thematic' }, { name: 'description', content: 'Release notes for every Thematic version.' }],
   }),
   component: BlogIndex,
 })
@@ -15,8 +15,7 @@ export const Route = createFileRoute('/blog/')({
 function BlogIndex() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Changelog</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">What's new in each Thematic release.</p>
+      <h1>Changelog</h1>
 
       <ul className="mt-8 space-y-4">
         {blogPosts.map((post) => (

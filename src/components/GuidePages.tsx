@@ -2,27 +2,29 @@ import type { ReactNode } from 'react'
 
 import type { BookPage } from '../lib/book'
 import { GuideInline, GuideText } from './GuideText'
+import { SuitStill } from './SuitStill'
+import { getSuit } from '../lib/suits'
 
 // One component per page type of the in-game guide (GuideSchema.java). The game draws some of them
 // from live data (a suit's stats, an ability's numbers); the export writes that data out, so the
 // web version shows the same things as plain content. What cannot be drawn on a web page (a 3D
-// figure, a turnable structure model, an animation preview) shows a short note in its place.
+// structure model, an animation preview) shows a short note in its place; suit figures are drawn.
 
-const muted = 'text-neutral-500 dark:text-neutral-400'
-const link = 'text-blue-600 hover:underline dark:text-blue-400'
+const muted = 'text-neutral-400'
+const link = 'text-blue-400 hover:underline'
 
 function Heading({ page }: { page: BookPage }) {
   if (!page.title) return null
   return (
-    <h2 className="mb-2 text-lg font-semibold">
-      {page.icon && <img src={page.icon} alt="" className="mr-2 inline h-6 w-6 align-text-bottom [image-rendering:pixelated]" />}
+    <h2 className="mb-3 flex items-center gap-2">
+      {page.icon && <img src={page.icon} alt="" className="h-5 w-5 [image-rendering:pixelated]" />}
       <GuideInline markup={page.title} />
     </h2>
   )
 }
 
 function Note({ children }: { children: ReactNode }) {
-  return <p className={`rounded-md border border-dashed border-neutral-300 px-3 py-2 text-sm dark:border-neutral-700 ${muted}`}>{children}</p>
+  return <p className="tb-note">{children}</p>
 }
 
 function Tile({ name, icon, count, options }: { name: string; icon?: string; count?: number; options?: string[] }) {
@@ -30,10 +32,10 @@ function Tile({ name, icon, count, options }: { name: string; icon?: string; cou
   return (
     <span
       title={title}
-      className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded border border-neutral-300 bg-neutral-100 p-0.5 text-center text-[9px] leading-tight dark:border-neutral-700 dark:bg-neutral-900"
+      className="tb-slot relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden p-0.5 text-center text-[9px] leading-tight text-neutral-400"
     >
       {icon ? <img src={icon} alt={name} loading="lazy" className="h-9 w-9 [image-rendering:pixelated]" /> : <span className="line-clamp-4 break-words">{name}</span>}
-      {count !== undefined && count > 1 && <span className="absolute bottom-0 right-0.5 text-[10px] font-bold">{count}</span>}
+      {count !== undefined && count > 1 && <span className="absolute bottom-0 right-0.5 text-[11px] font-bold text-white [text-shadow:1px_1px_0_#000]">{count}</span>}
     </span>
   )
 }
@@ -42,7 +44,7 @@ function ItemRow({ item }: { item: { name: string; icon?: string } }) {
   return (
     <span className="inline-flex items-center gap-3">
       <Tile name={item.name} icon={item.icon} />
-      <span className="font-medium">{item.name}</span>
+      <span className="font-semibold text-white">{item.name}</span>
     </span>
   )
 }
@@ -57,10 +59,10 @@ function Recipe({ recipe }: { recipe: BookPage }) {
   }
   return (
     <div className="inline-block max-w-full">
-      <p className={`mb-1 text-xs uppercase tracking-wide ${muted}`}>{recipe.label}</p>
+      <p className="tb-label mb-2">{recipe.label}</p>
       <div className="flex flex-wrap items-center gap-4">
         <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${recipe.cols}, 3rem)` }}>
-          {recipe.cells.map((cell: any, i: number) => (cell ? <Tile key={i} name={cell.name} icon={cell.icon} options={cell.options} /> : <span key={i} className="h-12 w-12 rounded border border-dashed border-neutral-200 dark:border-neutral-800" />))}
+          {recipe.cells.map((cell: any, i: number) => (cell ? <Tile key={i} name={cell.name} icon={cell.icon} options={cell.options} /> : <span key={i} className="tb-slot h-12 w-12" />))}
         </div>
         <span aria-hidden className={muted}>
           →
@@ -69,6 +71,38 @@ function Recipe({ recipe }: { recipe: BookPage }) {
         <span className="text-sm font-medium">{recipe.result.name}</span>
       </div>
     </div>
+  )
+}
+
+/** A figure page: the suit inked in a newsprint panel with its name under it; a mob is named, its model is in game only. */
+function FigureCard({ page, shiny }: { page: BookPage; shiny?: boolean }) {
+  const suit = page.suit ? getSuit(page.suit.id) : undefined
+  const texture = shiny ? suit?.shinyTexturePath : suit?.texturePath
+  const label = page.name ?? page.suit?.name ?? page.entity?.name
+  return (
+    <figure>
+      {suit?.geoPath && texture ? (
+        <div className="tb-panel">
+          <SuitStill geoPath={suit.geoPath} texturePath={texture} hiddenBones={suit.hiddenBones} name={`${page.suit.name}${shiny ? ' (shiny)' : ''}`} />
+        </div>
+      ) : null}
+      <figcaption className="mt-2 text-sm">
+        {page.suit?.href ? (
+          <a href={page.suit.href} className="font-semibold text-white hover:underline">
+            {shiny ? 'Shiny' : label}
+          </a>
+        ) : (
+          <span className="font-semibold text-white">{label}</span>
+        )}
+        {page.suit && !shiny && page.name && page.name !== page.suit.name && <span className="block text-xs text-neutral-500">{page.suit.name}</span>}
+        {!suit?.geoPath && <span className="tb-note block">{page.suit ? 'The 3D model of this suit is shown in game.' : 'The 3D model is shown in game.'}</span>}
+      </figcaption>
+      {page.text && (
+        <div className="mt-2 text-sm">
+          <GuideText markup={page.text} />
+        </div>
+      )}
+    </figure>
   )
 }
 
@@ -114,7 +148,7 @@ function PageBody({ page }: { page: BookPage }) {
           <div className="space-y-3">
             {page.images.map((img: { src: string | null; alt: string }, i: number) =>
               img.src ? (
-                <img key={i} src={img.src} alt={img.alt} loading="lazy" className={`max-w-full ${page.border ? 'rounded border border-neutral-300 p-1 dark:border-neutral-700' : ''}`} />
+                <img key={i} src={img.src} alt={img.alt} loading="lazy" className={`max-w-full ${page.border ? 'tb-inset p-1' : ''}`} />
               ) : (
                 <Note key={i}>Picture &ldquo;{img.alt}&rdquo; is not available on the web.</Note>
               ),
@@ -126,37 +160,7 @@ function PageBody({ page }: { page: BookPage }) {
         </>
       )
     case 'figure':
-      return (
-        <div className="rounded-md border border-neutral-200 p-4 dark:border-neutral-800">
-          {page.suit ? (
-            <>
-              <p className="text-lg font-semibold">
-                {page.suit.href ? (
-                  <a href={page.suit.href} className={link}>
-                    {page.name ?? page.suit.name}
-                  </a>
-                ) : (
-                  (page.name ?? page.suit.name)
-                )}
-              </p>
-              {page.suit.collection && (
-                <p className={`text-sm ${muted}`}>
-                  {page.suit.collection}
-                  {page.suit.tier !== undefined && ` · Tier ${page.suit.tier}`}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-lg font-semibold">{page.name ?? page.entity?.name}</p>
-          )}
-          {page.text && (
-            <div className="mt-2">
-              <GuideText markup={page.text} />
-            </div>
-          )}
-          <p className={`mt-2 text-xs ${muted}`}>{page.suit ? 'The 3D model of this suit is shown in game.' : 'The 3D model is shown in game.'}</p>
-        </div>
-      )
+      return <FigureCard page={page} />
     case 'structure':
       return (
         <>
@@ -176,22 +180,22 @@ function PageBody({ page }: { page: BookPage }) {
           </div>
           <GuideText markup={page.text} />
           {page.placements?.length > 0 && (
-            <table className="mt-3 w-full max-w-md border-collapse text-sm">
+            <table className="tb-table mt-3 max-w-md">
               <thead>
-                <tr className="border-b border-neutral-200 text-left dark:border-neutral-800">
-                  <th className="py-1 pr-4 font-medium">Vein</th>
-                  <th className="py-1 pr-4 font-medium">Y levels</th>
-                  <th className="py-1 font-medium">Veins per chunk</th>
+                <tr>
+                  <th>Vein</th>
+                  <th>Y levels</th>
+                  <th>Veins per chunk</th>
                 </tr>
               </thead>
               <tbody>
                 {page.placements.map((p: { variant: string; min: number; max: number; veins?: number }, i: number) => (
-                  <tr key={i} className="border-b border-neutral-100 dark:border-neutral-900">
-                    <td className="py-1 pr-4">{p.variant}</td>
-                    <td className="py-1 pr-4">
+                  <tr key={i}>
+                    <td>{p.variant}</td>
+                    <td>
                       {p.min} to {p.max}
                     </td>
-                    <td className="py-1">{p.veins ?? '—'}</td>
+                    <td>{p.veins ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -207,7 +211,7 @@ function PageBody({ page }: { page: BookPage }) {
             {page.entries.map((e: { label: string; href: string | null; icon?: string }, i: number) => (
               <li key={i}>
                 {e.href ? (
-                  <a href={e.href} className={`flex items-center gap-2 rounded-md border border-neutral-200 px-3 py-1.5 text-sm hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600 ${link}`}>
+                  <a href={e.href} className="tb-raised flex items-center gap-2 rounded-md px-3 py-1.5 text-sm">
                     {e.icon && <img src={e.icon} alt="" className="h-5 w-5 [image-rendering:pixelated]" />}
                     {e.label}
                   </a>
@@ -261,20 +265,20 @@ function PageBody({ page }: { page: BookPage }) {
         <>
           <Heading page={page} />
           {page.stats ? (
-            <table className="w-full max-w-md border-collapse text-sm">
+            <table className="tb-table max-w-md">
               <thead>
-                <tr className="border-b border-neutral-200 text-left dark:border-neutral-800">
-                  <th className="py-1 pr-4 font-medium">Stat</th>
-                  <th className="py-1 pr-4 font-medium text-blue-700 dark:text-blue-400">Base (Common)</th>
-                  <th className="py-1 font-medium text-amber-600 dark:text-amber-400">Max (Legendary)</th>
+                <tr>
+                  <th>Stat</th>
+                  <th>Base (Common)</th>
+                  <th>Max (Legendary)</th>
                 </tr>
               </thead>
               <tbody>
                 {page.stats.map((s: { label: string; min: number; max: number }, i: number) => (
-                  <tr key={i} className="border-b border-neutral-100 dark:border-neutral-900">
-                    <td className="py-1 pr-4">{s.label}</td>
-                    <td className="py-1 pr-4">{s.min}</td>
-                    <td className="py-1">{s.max}</td>
+                  <tr key={i}>
+                    <td>{s.label}</td>
+                    <td>{s.min}</td>
+                    <td>{s.max}</td>
                   </tr>
                 ))}
               </tbody>
@@ -289,12 +293,12 @@ function PageBody({ page }: { page: BookPage }) {
         <>
           <Heading page={page} />
           {page.abilities.length === 0 ? (
-            <p className={`text-sm italic ${muted}`}>No abilities listed.</p>
+            <Note>No abilities listed.</Note>
           ) : (
             <ul className="space-y-2">
               {page.abilities.map((a: { label: string; href: string; brief?: string }, i: number) => (
                 <li key={i}>
-                  <a href={a.href} className={`font-medium ${link}`}>
+                  <a href={a.href} className="font-semibold text-white hover:underline">
                     {a.label}
                   </a>
                   {a.brief && <p className={`text-sm ${muted}`}>{a.brief}</p>}
@@ -310,25 +314,26 @@ function PageBody({ page }: { page: BookPage }) {
           <Heading page={page} />
           {page.stats.length > 0 && (
             <div>
-              <p className="font-semibold text-blue-700 dark:text-blue-400">{page.title ? '' : 'Ability Stats'}</p>
-              <ul className="text-sm">
+              {!page.title && <p className="tb-label mb-2">Ability stats</p>}
+              <dl className="tb-inset grid grid-cols-2 gap-x-6 gap-y-2 rounded-md p-3 text-sm sm:grid-cols-3">
                 {page.stats.map((s: { label: string; value: string }, i: number) => (
-                  <li key={i}>
-                    {s.label}: {s.value}
-                  </li>
+                  <div key={i}>
+                    <dt className="text-xs text-neutral-500">{s.label}</dt>
+                    <dd className="font-semibold tabular-nums text-white">{s.value}</dd>
+                  </div>
                 ))}
-              </ul>
+              </dl>
             </div>
           )}
           {page.rulesText && (
             <div>
-              <p className="font-semibold text-amber-600 dark:text-amber-400">Ability Description</p>
+              <p className="tb-label mb-1">What it does</p>
               <GuideText markup={page.rulesText} />
             </div>
           )}
           {page.rulesSteps.length > 0 && (
             <div>
-              <p className="font-semibold text-amber-600 dark:text-amber-400">Ability Steps</p>
+              <p className="tb-label mb-1">Step by step</p>
               <ul className="list-disc pl-5">
                 {page.rulesSteps.map((s: string, i: number) => (
                   <li key={i}>
@@ -340,7 +345,7 @@ function PageBody({ page }: { page: BookPage }) {
           )}
           {(page.damageContext || page.damageNote) && (
             <div>
-              <p className="font-semibold text-amber-600 dark:text-amber-400">Damage Model</p>
+              <p className="tb-label mb-1">Damage</p>
               {page.damageContext && <p>{page.damageContext}</p>}
               {page.damageNote && <GuideText markup={`Note: ${page.damageNote}`} />}
             </div>
@@ -353,7 +358,7 @@ function PageBody({ page }: { page: BookPage }) {
           <GuideText markup={page.description} />
           {page.effects.length > 0 && (
             <div className="mt-3">
-              <p className="font-semibold text-amber-600 dark:text-amber-400">Relevant Effects</p>
+              <p className="tb-label mb-1">Related effects</p>
               <ul className="list-disc pl-5">
                 {page.effects.map((e: { label: string; href: string | null }, i: number) => (
                   <li key={i}>
@@ -374,17 +379,17 @@ function PageBody({ page }: { page: BookPage }) {
     case 'ability_keybinds':
       return (
         <>
-          <h2 className="mb-2 text-lg font-semibold text-amber-600 dark:text-amber-400">{page.title ?? 'Keybinds'}</h2>
+          <h2 className="mb-3">{page.title ?? 'Keybinds'}</h2>
           <ul className="space-y-1.5">
             {page.rows.map((r: { action: string; keys: { key?: string; name: string }[]; note?: string }, i: number) => (
               <li key={i} className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                {r.action && <span className="font-medium">{r.action}:</span>}
+                {r.action && <span className="font-semibold text-white">{r.action}:</span>}
                 {r.keys.length === 0 ? (
                   <span className={muted}>N/A</span>
                 ) : (
                   r.keys.map((k, j) => (
                     <span key={j} className="inline-flex items-center gap-1" title={k.name}>
-                      <kbd className="rounded border border-neutral-300 bg-neutral-100 px-1.5 py-0.5 font-mono text-xs dark:border-neutral-600 dark:bg-neutral-800">{k.key ?? k.name}</kbd>
+                      <kbd className="tb-raised rounded-md px-1.5 py-0.5 font-mono text-xs text-white">{k.key ?? k.name}</kbd>
                       {k.key && <span className={`text-xs ${muted}`}>{k.name}</span>}
                     </span>
                   ))
@@ -431,13 +436,38 @@ function PageBody({ page }: { page: BookPage }) {
   }
 }
 
-/** An entry's pages as one column, like the game: a block per page with a hairline between. */
-export function GuidePages({ pages }: { pages: BookPage[] }) {
+/** Pages in order, with each run of figure pages gathered into one grid (an alt list, a shiny pair). */
+function blocks(pages: BookPage[]): ({ figures: BookPage[]; at: number } | { page: BookPage; at: number })[] {
+  const out: ({ figures: BookPage[]; at: number } | { page: BookPage; at: number })[] = []
+  pages.forEach((page, at) => {
+    const last = out[out.length - 1]
+    if (page.type === 'figure' && last && 'figures' in last) last.figures.push(page)
+    else out.push(page.type === 'figure' ? { figures: [page], at } : { page, at })
+  })
+  return out
+}
+
+/** An entry's pages as one column, like the game: a block per page with a hairline between. {@code shinies} shows each suit beside its shiny look. */
+export function GuidePages({ pages, shinies }: { pages: BookPage[]; shinies?: boolean }) {
   return (
-    <div className="mt-6">
-      {pages.map((page, i) => (
-        <section key={i} id={page.anchor ?? `p${i}`} className="scroll-mt-4 border-t border-neutral-200 py-5 first:border-t-0 first:pt-0 dark:border-neutral-800">
-          <PageBody page={page} />
+    <div className="mt-2">
+      {blocks(pages).map((block) => (
+        <section
+          key={block.at}
+          id={'page' in block ? (block.page.anchor ?? `p${block.at}`) : `p${block.at}`}
+          className="scroll-mt-20 border-t border-neutral-800 py-6 first:border-t-0 first:pt-0"
+        >
+          {'page' in block ? (
+            <PageBody page={block.page} />
+          ) : (
+            <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
+              {block.figures.flatMap((f, i) => {
+                const cards = [<FigureCard key={i} page={f} />]
+                if (shinies && f.suit && getSuit(f.suit.id)?.shinyTexturePath) cards.push(<FigureCard key={`${i}s`} page={f} shiny />)
+                return cards
+              })}
+            </div>
+          )}
         </section>
       ))}
     </div>

@@ -15,7 +15,7 @@ export const Route = createFileRoute('/guides/$slug')({
   component: GuidePage,
   notFoundComponent: () => (
     <div>
-      <h1 className="text-2xl font-bold">Guide not found</h1>
+      <h1>Guide not found</h1>
       <Link to="/guides" className="mt-2 inline-block text-blue-600 hover:underline dark:text-blue-400">
         ← All guides
       </Link>

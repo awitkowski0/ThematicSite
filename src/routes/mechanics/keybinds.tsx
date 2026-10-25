@@ -32,10 +32,10 @@ function KeybindsPage() {
       <Link to="/mechanics" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
         ← Mechanics
       </Link>
-      <h1 className="mt-2 text-3xl font-bold">Keybinds</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Default binds — all rebindable in Minecraft's own Controls menu. Ability slots are per-suit: what each one actually does depends on the suit you're
-        wearing (see each suit's page for its own ability list).
+      <h1>Keybinds</h1>
+      <p className="text-neutral-400">
+        The default keys, all of which you can change under Controls. What each ability key does depends on the suit you are wearing; each suit's page
+        lists its moves.
       </p>
 
       <table className="mt-6 w-full max-w-md border-collapse text-sm">

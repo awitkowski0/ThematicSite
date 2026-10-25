@@ -18,8 +18,8 @@ function OresPage() {
       <Link to="/mechanics" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
         ← Mechanics
       </Link>
-      <h1 className="mt-2 text-3xl font-bold">Ores</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1>Ores</h1>
+      <p className="text-neutral-400">
         What depth to dig at for each ore Thematic adds, and how common it is down there.
       </p>
 

@@ -44,7 +44,7 @@ function StructureCard({ structure }: { structure: ThematicStructure }) {
         <span className="text-xs text-neutral-500">{structure.dimension}</span>
       </div>
 
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">{structure.summary}</p>
+      <p className="text-neutral-400">{structure.summary}</p>
 
       <div className="mt-4 space-y-2">
         <RarityBar chunksPerAttempt={structure.chunksPerAttempt} label={structure.rarity} />
@@ -67,7 +67,7 @@ function StructureCard({ structure }: { structure: ThematicStructure }) {
       </dl>
 
       <ItemList title="Drops" entries={structure.loot} />
-      <ItemList title="Worth mining" entries={structure.blocks} hint="No chests here — the ingredients are in the blocks themselves." />
+      <ItemList title="Worth mining" entries={structure.blocks} hint="No chests here; the ingredients are in the blocks themselves." />
 
       {structure.tips && structure.tips.length > 0 && (
         <ul className="mt-4 space-y-1 text-sm text-neutral-600 dark:text-neutral-400">
@@ -94,8 +94,8 @@ function StructureCard({ structure }: { structure: ThematicStructure }) {
 function StructuresPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Structures</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1>Structures</h1>
+      <p className="text-neutral-400">
         Where each structure spawns, how hard it is to find, what it drops, and what will attack you. Rarity comes from the mod's worldgen settings and drop
         rates from its loot tables, so these are the real numbers rather than estimates.
       </p>

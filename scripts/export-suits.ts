@@ -18,6 +18,7 @@ import {
   listResourcesAll,
   OUT_ITEMS_DIR,
   OUT_SUITS_DIR,
+  SITE_ROOT,
   copyIfExists,
   namespaceOf,
   readJson,
@@ -384,6 +385,15 @@ function buildRecipeGraph(
   return nodes
 }
 
+const OUT_GEO_DIR = path.join(SITE_ROOT, 'public/geo')
+
+// PNG width/height from the IHDR chunk.
+function pngSize(file: string): [number, number] | undefined {
+  if (!fs.existsSync(file)) return undefined
+  const b = fs.readFileSync(file)
+  return b.length >= 24 ? [b.readUInt32BE(16), b.readUInt32BE(20)] : undefined
+}
+
 // ---------- main ----------
 
 export function exportSuits() {
@@ -397,6 +407,7 @@ export function exportSuits() {
   const mergeCache = new Map<string, MergedArmor>()
 
   fs.rmSync(OUT_SUITS_DIR, { recursive: true, force: true })
+  fs.rmSync(OUT_GEO_DIR, { recursive: true, force: true })
   fs.mkdirSync(OUT_ITEMS_DIR, { recursive: true })
   fs.mkdirSync(OUT_DATA_DIR, { recursive: true })
 
@@ -426,7 +437,44 @@ export function exportSuits() {
     recipe?: RecipeIngredient[]
     texturePath?: string
     shinyTexturePath?: string
+    /** Bedrock geo the in-browser figure draws, as the game resolves it. */
+    geoPath?: string
+    /** Bones the figure leaves out at rest, as the game hides them while no ability is on. */
+    hiddenBones?: string[]
   }[] = []
+  const geoStats = { own: 0, parent: 0, skinStyle: 0 }
+  // Bones an ability draws only while it runs (a toggle's or a timed press's "show" list), by ability id: hidden at rest.
+  const showWhileOn = new Map<string, string[]>()
+  for (const ext of ['.js', '.json']) {
+    for (const { rel, file } of listResources('data/thematic/abilities', ext)) {
+      const names = [...fs.readFileSync(file, 'utf8').matchAll(/["']?show["']?\s*:\s*\[([^\]]*)\]/g)].flatMap((m) => [...m[1].matchAll(/["']([^"']+)["']/g)].map((n) => n[1]))
+      if (names.length) showWhileOn.set(path.basename(rel, ext), names)
+    }
+  }
+  // The glider only shows in fast flight.
+  const restHidden = (abilityIds: string[]) => [...new Set(['glider', ...abilityIds.flatMap((a) => showWhileOn.get(stripNamespace(a)) ?? [])])]
+  const missingTextures: string[] = []
+  const geoSource = (rel: string) => findResource(`${ASSETS}/geo/armor/${rel}.geo.json`)
+  const geoOut = (rel: string): string | undefined => {
+    const src = geoSource(rel)
+    if (!src || !fs.existsSync(src)) return undefined
+    // minified: the sources are pretty-printed, several times larger over the wire
+    const out = path.join(OUT_GEO_DIR, `${rel}.geo.json`)
+    fs.mkdirSync(path.dirname(out), { recursive: true })
+    fs.writeFileSync(out, JSON.stringify(JSON.parse(fs.readFileSync(src, 'utf8'))))
+    return `/geo/${rel}.geo.json`
+  }
+  // Mirrors CharacterModel.resolveGeo: own geo, else an alt whose texture isn't a 128x64 skin atlas wears its parent's, else skin_style.
+  const resolveGeoPath = (id: string, parent: string | null, texturePath: string | undefined): string | undefined => {
+    const own = geoOut(id)
+    if (own) { geoStats.own++; return own }
+    if (parent && !(texturePath && pngSize(path.join(OUT_SUITS_DIR, `${id}.png`))?.join('x') === '128x64')) {
+      const inherited = geoOut(parent)
+      if (inherited) { geoStats.parent++; return inherited }
+    }
+    geoStats.skinStyle++
+    return geoOut('skin_style')
+  }
   let missingGuideEntryCount = 0
 
   for (const id of allIds) {
@@ -444,6 +492,9 @@ export function exportSuits() {
     if (copyIfExists(findResource(`${ASSETS}/textures/armor/${id}_shiny.png`), path.join(OUT_SUITS_DIR, `${id}_shiny.png`))) {
       shinyTexturePath = `/suits/${id}_shiny.png`
     }
+
+    if (!texturePath) missingTextures.push(id)
+    const geoPath = resolveGeoPath(id, rawArmors.get(id)?.parent ?? null, texturePath)
 
     suits.push({
       id,
@@ -466,6 +517,8 @@ export function exportSuits() {
       recipe: resolveTopRecipe(merged.recipe, releasedSuitIds),
       texturePath,
       shinyTexturePath,
+      geoPath,
+      hiddenBones: restHidden(merged.abilities.map((a) => a.id)),
     })
   }
 
@@ -514,6 +567,7 @@ export function exportSuits() {
 
   console.log(`[export-suits] wrote ${suits.length} suits (${releasedCount} released, ${suits.length - releasedCount} WIP) across ${collectionsOut.length} collections`)
   console.log(`[export-suits] crafting-tree map covers ${Object.keys(recipeGraph).length} distinct thematic components`)
+  console.log(`[export-suits] geo: ${geoStats.own} own, ${geoStats.parent} parent's, ${geoStats.skinStyle} skin_style; ${missingTextures.length} suit(s) without a texture${missingTextures.length ? `: ${missingTextures.join(', ')}` : ''}`)
   if (missingGuideEntryCount > 0) {
     console.log(`[export-suits] ${missingGuideEntryCount} suit(s) have no display name in the lang files or a guide entry — using title-cased id as their display name`)
   }

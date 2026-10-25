@@ -36,9 +36,9 @@ export function PlayerSearch() {
         placeholder="Player name"
         aria-label="Player name"
         maxLength={36}
-        className="min-w-0 flex-1 rounded-md border border-neutral-300 bg-transparent px-3 py-1.5 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700"
+        className="min-w-0 flex-1 tb-inset rounded-md px-3 py-1.5 text-sm outline-none focus:!border-blue-400"
       />
-      <button type="submit" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+      <button type="submit" className="tb-button px-3 py-1.5 text-sm">
         Look up
       </button>
     </form>
@@ -77,7 +77,7 @@ export function QueuesAndMatches() {
               <li key={m.id} className={box}>
                 <div className="flex items-baseline justify-between gap-2">
                   <h3 className="font-semibold">{m.name}</h3>
-                  <Link to="/play" className="rounded-md bg-neutral-900 px-2.5 py-1 text-xs text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+                  <Link to="/play" className="tb-button px-2.5 py-1 text-xs">
                     Join
                   </Link>
                 </div>
@@ -144,7 +144,7 @@ export function GameLeaderboards() {
   const modes = status.data?.modes ?? []
 
   const tab = (active: boolean) =>
-    `rounded-md px-3 py-1 text-sm ${active ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900' : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900'}`
+    `rounded-md px-3 py-1 text-sm ${active ? 'bg-pressed text-white' : 'text-neutral-600 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:bg-neutral-900'}`
 
   return (
     <div>
@@ -161,7 +161,7 @@ export function GameLeaderboards() {
           <select
             value={by}
             onChange={(e) => setBy(e.target.value as typeof by)}
-            className="rounded-md border border-neutral-300 bg-transparent px-2 py-1 text-sm text-neutral-900 outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950 dark:text-neutral-100"
+            className="tb-inset rounded-md px-2 py-1 text-sm outline-none focus:!border-blue-400"
           >
             {SORTS.map((s) => (
               <option key={s.id} value={s.id}>

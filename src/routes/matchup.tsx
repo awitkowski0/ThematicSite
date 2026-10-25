@@ -15,10 +15,10 @@ export const Route = createFileRoute('/matchup')({
 function MatchupPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Matchup</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        Put two suits against each other and see how the fight actually plays out — every ability fired as it comes up, melee in between, and how long it takes
-        to drop them.
+      <h1>Matchup</h1>
+      <p className="text-neutral-400">
+        Put two suits against each other and see how the fight plays out: every ability fired as it comes off cooldown, melee in between, and how long it
+        takes to win.
       </p>
 
       <div className="mt-6">

@@ -132,7 +132,7 @@ export function Territories() {
       <section>
         <ZoneMap zones={data.zones} hover={hover} onHover={setHover} />
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <a href={LIVE_MAP_PATH} target="_blank" rel="noreferrer" className="rounded-md bg-neutral-900 px-3 py-1.5 text-sm text-white hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+          <a href={LIVE_MAP_PATH} target="_blank" rel="noreferrer" className="tb-button px-3 py-1.5 text-sm">
             Open the live 3D map
           </a>
           <button type="button" onClick={() => setEmbed((e) => !e)} className="text-sm text-blue-600 hover:underline dark:text-blue-400">

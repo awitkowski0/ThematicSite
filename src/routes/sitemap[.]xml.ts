@@ -10,10 +10,10 @@ export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async () => {
-        const staticPaths = ['/', '/suits', '/faq', '/play', '/server', '/games', '/territories', '/book', '/blog', '/mechanics', '/mechanics/stats', '/mechanics/rarities', '/mechanics/shiny', '/mechanics/keybinds', '/mechanics/ores', '/abilities', '/matchup', '/planner', '/structures']
+        const staticPaths = ['/', '/suits', '/faq', '/play', '/server', '/games', '/territories', '/wiki', '/blog', '/mechanics', '/mechanics/stats', '/mechanics/rarities', '/mechanics/shiny', '/mechanics/keybinds', '/mechanics/ores', '/abilities', '/matchup', '/planner', '/structures']
         const suitPaths = suits.filter((s) => !s.wip).map((s) => `/suits/${s.id}`)
         // Entries whose suit has its own page are listed under /suits/$id above.
-        const bookPaths = bookCategories.flatMap((c) => [`/book/${c.id}`, ...c.entries.filter((e) => e.href.startsWith('/book/')).map((e) => e.href)])
+        const bookPaths = bookCategories.flatMap((c) => [`/wiki/${c.id}`, ...c.entries.filter((e) => e.href.startsWith('/wiki/')).map((e) => e.href)])
         const blogPaths = blogPosts.map((p) => `/blog/${p.version}`)
         const urls = [...staticPaths, ...suitPaths, ...bookPaths, ...blogPaths]
           .map((p) => `  <url><loc>${SITE_URL}${p}</loc></url>`)

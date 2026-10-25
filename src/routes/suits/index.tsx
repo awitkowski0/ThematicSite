@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { Suit, accentForCollection, familiesByCollection, suits } from '../../lib/suits'
+import { Suit, familiesByCollection, suits } from '../../lib/suits'
+import { SuitStill } from '../../components/SuitStill'
 
 export const Route = createFileRoute('/suits/')({
   head: () => ({
@@ -13,31 +14,34 @@ export const Route = createFileRoute('/suits/')({
   component: SuitsIndex,
 })
 
-function SuitLink({ suit, showTier = true }: { suit: Suit; showTier?: boolean }) {
+/** A suit as a figure card: its inked still, name, and tier or the version count. */
+function SuitCard({ suit, versions }: { suit: Suit; versions?: number }) {
   return (
-    <Link
-      to="/suits/$id"
-      params={{ id: suit.id }}
-      className="flex items-center gap-3 rounded-md border border-neutral-200 p-2 text-sm hover:border-neutral-400 dark:border-neutral-800 dark:hover:border-neutral-600"
-    >
-      <span className="h-8 w-1 shrink-0 rounded-full" style={{ backgroundColor: accentForCollection(suit.collection) }} />
-      <span className="min-w-0 flex-1">
-        <span className="block truncate">{suit.name}</span>
-        {showTier && <span className="block text-xs text-neutral-500">Tier {suit.tier}</span>}
-      </span>
-      {suit.wip && (
-        <span className="ml-auto shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:bg-amber-900/40 dark:text-amber-400">
-          WIP
+    <li>
+      <Link to="/suits/$id" params={{ id: suit.id }} className="group block">
+        {suit.geoPath && suit.texturePath ? (
+          <div className="tb-panel">
+            <SuitStill geoPath={suit.geoPath} texturePath={suit.texturePath} hiddenBones={suit.hiddenBones} name={suit.name} />
+          </div>
+        ) : (
+          <div className="tb-inset aspect-[3/4]" />
+        )}
+        <span className="mt-1.5 block text-sm font-semibold leading-tight text-white group-hover:underline">{suit.name}</span>
+        <span className="block text-xs text-neutral-500">
+          Tier {suit.tier}
+          {versions ? ` · ${versions} version${versions === 1 ? '' : 's'}` : ''}
+          {suit.wip && ' · WIP'}
         </span>
-      )}
-    </Link>
+      </Link>
+    </li>
   )
 }
+
+const grid = 'mt-3 grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 lg:grid-cols-6'
 
 function SuitsIndex() {
   const [query, setQuery] = useState('')
   const [showWip, setShowWip] = useState(false)
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({})
 
   const groups = useMemo(() => familiesByCollection(), [])
   const normalized = query.trim().toLowerCase()
@@ -46,13 +50,13 @@ function SuitsIndex() {
   const variantCount = suits.filter((s) => s.parent && !s.wip).length
 
   const visible = (s: Suit) => (showWip || !s.wip) && (!normalized || s.name.toLowerCase().includes(normalized))
+  const matches = normalized ? suits.filter(visible).sort((a, b) => Number(!!a.parent) - Number(!!b.parent) || a.name.localeCompare(b.name)) : []
 
   return (
     <div>
-      <h1 className="text-3xl font-bold">Suits</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-        {characterCount} characters, each with their own abilities and recipe — plus {variantCount} alternate versions between them. Pick one to see what it
-        does and how to craft it.
+      <h1>Suits</h1>
+      <p className="text-neutral-400">
+        {characterCount} characters and {variantCount} alternate versions, each with its own abilities and recipe.
       </p>
 
       <div className="mt-6 flex flex-wrap items-center gap-4">
@@ -60,62 +64,46 @@ function SuitsIndex() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search suits…"
-          className="w-full max-w-sm rounded-md border border-neutral-300 bg-transparent px-3 py-2 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700"
+          placeholder="Filter suits…"
+          className="tb-inset w-full max-w-sm rounded-md px-3 py-2 text-sm outline-none focus:!border-blue-400"
         />
-        <label className="flex items-center gap-2 text-sm text-neutral-600 dark:text-neutral-400">
-          <input type="checkbox" checked={showWip} onChange={(e) => setShowWip(e.target.checked)} className="h-4 w-4 rounded border-neutral-300 dark:border-neutral-700" />
+        <label className="flex items-center gap-2 text-sm text-neutral-400">
+          <input type="checkbox" checked={showWip} onChange={(e) => setShowWip(e.target.checked)} className="h-4 w-4 accent-accent" />
           Show WIP suits
         </label>
       </div>
 
-      <div className="mt-8 space-y-10">
-        {groups.map(({ collection, families }) => {
-          // A character stays listed if it matches, or if any of its variants do.
-          const shown = families
-            .map((f) => ({ ...f, variants: f.variants.filter(visible) }))
-            .filter((f) => visible(f.base) || f.variants.length > 0)
-          if (shown.length === 0) return null
-
-          return (
-            <section key={collection.id}>
-              <h2 className="text-lg font-semibold">
-                {collection.name} <span className="font-normal text-neutral-500">({shown.length})</span>
-              </h2>
-              <ul className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {shown.map((family) => {
-                  const isOpen = expanded[family.base.id] || (normalized !== '' && family.variants.length > 0)
-                  return (
-                    <li key={family.base.id}>
-                      <SuitLink suit={family.base} />
-                      {family.variants.length > 0 && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => setExpanded((prev) => ({ ...prev, [family.base.id]: !prev[family.base.id] }))}
-                            className="mt-1 w-full px-2 text-left text-xs text-blue-600 hover:underline dark:text-blue-400"
-                          >
-                            {isOpen ? 'Hide' : 'Show'} {family.variants.length} version{family.variants.length === 1 ? '' : 's'}
-                          </button>
-                          {isOpen && (
-                            <ul className="mt-1 space-y-1 border-l border-neutral-200 pl-3 dark:border-neutral-800">
-                              {family.variants.map((v) => (
-                                <li key={v.id}>
-                                  <SuitLink suit={v} showTier={false} />
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </section>
-          )
-        })}
-      </div>
+      {normalized ? (
+        <section className="mt-8">
+          <h2>
+            {matches.length} match{matches.length === 1 ? '' : 'es'}
+          </h2>
+          <ul className={grid}>
+            {matches.map((suit) => (
+              <SuitCard key={suit.id} suit={suit} />
+            ))}
+          </ul>
+        </section>
+      ) : (
+        <div className="mt-8 space-y-10">
+          {groups.map(({ collection, families }) => {
+            const shown = families.filter((f) => visible(f.base))
+            if (shown.length === 0) return null
+            return (
+              <section key={collection.id}>
+                <h2>
+                  {collection.name} <span className="font-normal text-neutral-500">{shown.length}</span>
+                </h2>
+                <ul className={grid}>
+                  {shown.map((f) => (
+                    <SuitCard key={f.base.id} suit={f.base} versions={f.variants.filter((v) => showWip || !v.wip).length} />
+                  ))}
+                </ul>
+              </section>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

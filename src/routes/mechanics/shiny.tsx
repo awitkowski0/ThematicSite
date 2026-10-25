@@ -18,12 +18,12 @@ function ShinyPage() {
       <Link to="/mechanics" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
         ← Mechanics
       </Link>
-      <h1 className="mt-2 text-3xl font-bold">Shiny System</h1>
+      <h1>Shiny System</h1>
       <div className="mt-6">
         <GuideText markup={category?.description || 'Not available in this build.'} />
       </div>
       <p className="mt-6 text-sm text-neutral-500 dark:text-neutral-400">
-        Server admins can tune the odds with the <code>shinyChance</code> gamerule (default 0.03 — 3%).
+        Server admins can tune the odds with the <code>shinyChance</code> gamerule (default 0.03, or 3%).
       </p>
     </div>
   )

@@ -1,70 +1,30 @@
 import { Link } from '@tanstack/react-router'
 
-import { cardLinkClass } from './controls'
+import { SECTIONS } from '../lib/sections'
 
-// Everything the site can do, in one place — the top bar only carries the handful of links
-// most people want, so this is where the rest lives.
-const SECTIONS: { to: string; title: string; description: string }[] = [
-  { to: '/suits', title: 'Suits', description: 'Every suit, its abilities, stats, and how to craft it.' },
-  { to: '/abilities', title: 'Abilities', description: 'What each ability does, and the damage and cooldown behind it.' },
-  { to: '/matchup', title: 'Matchup', description: 'Pit two suits against each other and see how the fight goes.' },
-  { to: '/planner', title: 'Craft planner', description: 'Plan a batch or a shiny grind, and where to gather the materials.' },
-  { to: '/mechanics/stats', title: 'Stats', description: 'What Defense, Utility, Attack and Speed do, plus a damage calculator.' },
-  { to: '/mechanics', title: 'Mechanics', description: 'Rarity, shinies, keybinds, and where ores spawn.' },
-  { to: '/guides', title: 'Guides', description: 'Community-written walkthroughs and tips.' },
-  { to: '/server', title: 'Server', description: 'Join address, who is online, and the leaderboards.' },
-  { to: '/games', title: 'Games', description: 'Queues, live matches, and game mode leaderboards.' },
-  { to: '/territories', title: 'Territories', description: 'The weekly guild event live: who holds each Gotham zone, standings and prizes.' },
-  { to: '/faq', title: 'FAQ', description: 'Common questions about installing and playing.' },
-]
-
-// The guidebook's own categories, surfaced directly rather than buried a click deeper.
-const REFERENCE: { to: string; title: string; description: string }[] = [
-  { to: '/structures', title: 'Structures', description: 'Spawn rarity, drop rates, and what fights you there.' },
-  { to: '/book/mobs', title: 'Mobs', description: 'What spawns them, what they drop.' },
-  { to: '/book/status_effect', title: 'Status effects', description: 'Every effect and what it does to you.' },
-  { to: '/book/arrow', title: 'Arrows', description: 'Every arrowhead, with damage and cooldown.' },
-  { to: '/book/gadget', title: 'Gadgets', description: 'Batarangs, grenades, and the rest of the belt.' },
-  { to: '/book/constructs', title: 'Constructs', description: 'Every Lantern construct you can summon.' },
-  { to: '/book', title: 'Full guidebook', description: 'Everything from the in-game book.' },
-]
-
+/** Every area of the site with its pages, from the same map as the header. */
 export function SiteIndex() {
   return (
-    <section className="mt-10 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-      <h2 className="text-lg font-semibold">Table of contents</h2>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+    <section className="mt-10">
+      <h2>Everything on the site</h2>
+      <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {SECTIONS.map((s) => (
-          <li key={s.to}>
-            <Link
-              to={s.to}
-              className={cardLinkClass}
-            >
-              <div className="font-medium">{s.title}</div>
-              <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{s.description}</div>
+          <li key={s.id} className="tb-raised flex flex-col rounded-md p-4">
+            <Link to={s.to} className="font-semibold text-white hover:underline">
+              {s.label}
             </Link>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-/** The guidebook's own categories. Kept separate so the page can place it where it likes. */
-export function ReferenceIndex() {
-  return (
-    <section className="mt-10 border-t border-neutral-200 pt-6 dark:border-neutral-800">
-      <h2 className="text-lg font-semibold">Reference</h2>
-      <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-        {REFERENCE.map((s) => (
-          <li key={s.to}>
-            <a
-              href={s.to}
-              className={cardLinkClass}
-            >
-              <div className="font-medium">{s.title}</div>
-              <div className="mt-1 text-sm text-neutral-600 dark:text-neutral-400">{s.description}</div>
-            </a>
+            <p className="mt-1 text-sm text-neutral-400">{s.description}</p>
+            {s.tabs.length > 1 && (
+              <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-sm">
+                {s.tabs.map((t) => (
+                  <li key={t.to}>
+                    <Link to={t.to} title={t.description} className="text-blue-400 hover:underline">
+                      {t.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
           </li>
         ))}
       </ul>

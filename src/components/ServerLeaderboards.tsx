@@ -104,7 +104,7 @@ function LeaderboardCard<T>({
   )
 }
 
-const selectClass = 'rounded-md border border-neutral-300 bg-transparent px-2 py-1 text-sm outline-none focus:border-neutral-500 dark:border-neutral-700 dark:bg-neutral-950'
+const selectClass = 'tb-inset rounded-md px-2 py-1 text-sm outline-none focus:!border-blue-400'
 
 function GuildContributionsSection() {
   const { data: guildsData } = useLeaderboard<{ entries: GuildEntry[] }>('guilds', { limit: '50' })

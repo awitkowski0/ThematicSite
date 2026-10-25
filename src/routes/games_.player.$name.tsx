@@ -18,7 +18,7 @@ function PlayerPage() {
           Games
         </Link>
       </p>
-      <h1 className="mt-1 text-3xl font-bold">{name}</h1>
+      <h1>{name}</h1>
       <div className="mt-4 max-w-md">
         <PlayerSearch />
       </div>

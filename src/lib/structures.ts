@@ -58,7 +58,7 @@ export const STRUCTURES: ThematicStructure[] = [
       'The main source of Willpower Shards, and where Alien Blood Splatter is found. A wave spawner inside summons Manhunters when you get close.',
     mob: { name: 'Manhunter', health: 120, count: '3 per player, up to 15', how: 'Wave spawner, triggers within 100 blocks' },
     loot: [{ item: 'Willpower Shard', count: '3-6 guaranteed', note: 'Dropped on clearing the wave' }],
-    note: 'The guidebook says Manhunters have 220 HP and drop 1-3 Willpower Shards. The data says 120 HP and 3-6 shards.',
+    note: 'The wiki says Manhunters have 220 HP and drop 1-3 Willpower Shards. The data says 120 HP and 3-6 shards.',
     tips: [
       '1 in 4 spaceships contains a Willpower Battery block — the other three are identical without it.',
       'Manhunters are not a boss wave, so they get no health or damage multiplier.',
@@ -78,7 +78,7 @@ export const STRUCTURES: ThematicStructure[] = [
       { item: 'Fear Battery', chance: 70 },
       { item: 'Arkillo (suit ingredient)', chance: 30 },
     ],
-    note: 'The guidebook lists Arkillo at 1024 HP. The code gives him 1000 base with a 1.5× boss multiplier, so 1500.',
+    note: 'The wiki lists Arkillo at 1024 HP. The code gives him 1000 base with a 1.5× boss multiplier, so 1500.',
     tips: ['You get exactly one of the two drops, not both — 70/30 either way.'],
   },
   {
@@ -98,7 +98,7 @@ export const STRUCTURES: ThematicStructure[] = [
       { item: 'Advanced Technology', chance: 5, count: '1-2' },
       { item: 'Redstone', chance: 100, count: '4-9' },
     ],
-    note: 'The guidebook says Mutant Gene is a 15% drop. The loot table says 40%.',
+    note: 'The wiki says Mutant Gene is a 15% drop. The loot table says 40%.',
     tips: ['The Sentinel can despawn — it is not marked persistent, so deal with it while you are there.'],
   },
   {

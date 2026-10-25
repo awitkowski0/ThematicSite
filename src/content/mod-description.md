@@ -1,30 +1,24 @@
 # Thematic
 
-Play as your favorite hero. Thematic adds {{suitCount}} craftable superhero and supervillain suits to Minecraft — DC, Marvel, *The Boys*, *Invincible*, and more — each with the powers you'd expect. Fly as Superman, grapple across rooftops as Batman, run down mobs as The Flash, or build constructs as a Green Lantern.
+Play as your favorite hero. Thematic adds {{suitCount}} superhero and supervillain suits to Minecraft from DC, Marvel, *The Boys* and *Invincible*, and every one has its own powers. Fly as Superman, fight with Batman's gadgets, outrun everything as The Flash, or build constructs with a Green Lantern ring.
 
 ## What's in it
 
-- **{{suitCount}} suits** across {{collectionCount}} collections
-- **Powers that actually feel different** — Batman's gadgets, Superman's heat vision, and Green Lantern's constructs each work their own way, not reskins of one shared ability
-- **The Suit Bench**, where you build suits from parts you gather and craft
-- **Weapons and gadgets** for the tech-based heroes
-- **Capes and gliders** on the suits that wear them
-- **New ores, mobs, and structures** to find while you gear up
+- **{{suitCount}} suits** across {{collectionCount}} collections, many with comic, film, TV and game versions
+- **Powers built for each character.** Heat vision, super speed, claws, constructs and gadgets each work their own way.
+- **A starter suit from your first minute**, upgraded ten times as you go
+- **The Suit Bench**, where every other suit is crafted from materials you mine, smelt and weave
+- **Rarity, collections and shinies** that change a suit's stats and look
+- **New ores, mobs, bosses and structures**, and the Speed Force dimension
 
-[Browse every suit](/suits) to see its powers and exactly what it takes to craft.
+[Browse every suit](/suits) to see its powers and what it takes to craft, or start with the [wiki walkthrough](/wiki).
 
 ## Getting started
 
-1. Install [Fabric API](https://modrinth.com/mod/fabric-api) — Thematic needs it
-2. Minecraft **1.20.1**, Fabric (no Forge or NeoForge version)
-3. Optional: [Point Blank](https://www.curseforge.com/minecraft/mc-mods/point-blank) if you want working guns for characters who use them
-
-Craft a Suit Bench, gather the parts a suit needs, and put it together. The in-game guidebook walks you through it, and every recipe is [on this site](/suits) too.
+Thematic runs on **Fabric** for **Minecraft 1.20.1** and needs [Fabric API](https://modrinth.com/mod/fabric-api). The easiest way in is the official modpack: see [How to join](/play).
 
 ## Play with us
 
-There's an official server at `thematic.bond` — click "Official Server" in the multiplayer menu in-game. See [Play](/play) to get set up.
-
-Questions? Check the [FAQ](/faq) or join the Discord.
+The official server is at `thematic.bond`, or click **Official Server** in the multiplayer menu. Questions? Check the [FAQ](/faq) or ask in the Discord.
 
 {{credits}}

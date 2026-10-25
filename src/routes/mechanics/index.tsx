@@ -20,8 +20,8 @@ const PAGES = [
 function MechanicsIndex() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Mechanics</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">The systems underneath suits — stats, rarity, shinies, keybinds, and where to find ores.</p>
+      <h1>Mechanics</h1>
+      <p className="text-neutral-400">How stats, rarity, shinies and keybinds work, and where to find ores.</p>
       <ul className="mt-8 grid gap-3 sm:grid-cols-2">
         {PAGES.map((page) => (
           <li key={page.to}>

@@ -16,8 +16,8 @@ export const Route = createFileRoute('/server')({
 function ServerPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Server</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1>Server</h1>
+      <p className="text-neutral-400">
         The official Thematic server. New here? The{' '}
         <Link to="/play" className="text-blue-600 hover:underline dark:text-blue-400">
           play guide

@@ -15,8 +15,8 @@ export const Route = createFileRoute('/territories')({
 function TerritoriesPage() {
   return (
     <div>
-      <h1 className="text-3xl font-bold">Territories</h1>
-      <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+      <h1>Territories</h1>
+      <p className="text-neutral-400">
         Every week, guilds fight over the looting zones of Gotham. Stand on a zone to capture it; hold it at the top of the hour to score. To take part, join the{' '}
         <Link to="/server" className="text-blue-600 hover:underline dark:text-blue-400">
           server
