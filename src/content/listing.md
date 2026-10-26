@@ -1,10 +1,8 @@
-[![Thematic: superhero suits for Minecraft](/badge/banner)](/)
+[![Thematic: the Justice League and friends](/listing/cover.jpg)](/)
 
-[![Join the Discord](/badge/discord)](https://discord.gg/gXk4AJz8qM) [![Players on the official server](/badge/players)](/play) [![Every suit](/badge/suits)](/suits)
+[![Join the Discord](/badge/discord)](https://discord.gg/gXk4AJz8qM) [![Players on the official server](/badge/players)](/play) [![Craftable armors](/badge/armors)](/suits)
 
-![The Justice League in Thematic](https://media.forgecdn.net/attachments/858/798/thematic_cover.png)
-
-Thematic is a superhero mod. There are {{suitCount}} suits in it right now, from DC, Marvel, *The Boys* and *Invincible*, and you craft all of them in survival.
+Thematic is a superhero mod with {{craftableCount}} craftable armors from DC, Marvel, *The Boys* and *Invincible*. You make them in survival at the Suit Bench.
 
 Superman flies and has heat vision. The Flash is faster than anything else in the game. Green Lantern builds things out of light, and Batman gets by on gadgets and a grapple. We try to make each character play like themselves instead of giving everyone the same three powers.
 
@@ -14,7 +12,7 @@ You can see every suit, its powers and its recipe on the [website](/suits).
 
 ## Features
 
-- {{suitCount}} suits across {{collectionCount}} collections, with comic, movie, show and game versions of most characters
+- {{craftableCount}} craftable armors across {{collectionCount}} collections, with comic, movie, show and game versions of most characters
 - A starter suit you pick on your first join, which you upgrade as you play
 - The Suit Bench, where you craft everything else
 - Rarities, shinies, and team bonuses when your friends wear suits from the same collection
@@ -23,7 +21,7 @@ You can see every suit, its powers and its recipe on the [website](/suits).
 
 ## How to start
 
-Thematic is a Fabric mod for Minecraft 1.20.1. The only thing it needs is [Fabric API](https://modrinth.com/mod/fabric-api). {{installHint}}
+Thematic is a Fabric mod for Minecraft 1.20.1. This project is the suits. They run on the [Thematic core]({{otherProjectUrl}}), which needs [Fabric API](https://modrinth.com/mod/fabric-api). {{app}} installs both for you.
 
 When you join a world you'll get to pick a starter suit. After that, your goal is a Suit Bench:
 

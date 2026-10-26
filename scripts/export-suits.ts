@@ -549,12 +549,18 @@ export function exportSuits() {
   fs.writeFileSync(path.join(OUT_DATA_DIR, 'collections.generated.json'), JSON.stringify(collectionsOut, null, 2))
   fs.writeFileSync(path.join(OUT_DATA_DIR, 'recipes.generated.json'), JSON.stringify(recipeGraph, null, 2))
   const releasedCount = suits.filter((s) => !s.wip).length
+  // base suits made at a Suit Bench; alt looks, starters, bosses and event suits are not counted
+  const craftableCount = suits.filter((s) => {
+    const entry = !s.wip && !s.parent && recipeIndex.get(`thematic:${s.id}`)
+    return entry && JSON.parse(fs.readFileSync(entry.file, 'utf8')).type === 'thematic:suit_bench'
+  }).length
   const releasedCollectionCount = collectionsOut.filter((c) => suits.some((s) => s.collection === c.id && !s.wip)).length
   fs.writeFileSync(
     path.join(OUT_DATA_DIR, 'stats.generated.json'),
     JSON.stringify(
       {
         suitCount: releasedCount,
+        craftableCount,
         // Base characters only — alts are versions of these, and 529 overstates the roster.
         characterCount: suits.filter((s) => !s.wip && !s.parent).length,
         collectionCount: releasedCollectionCount,

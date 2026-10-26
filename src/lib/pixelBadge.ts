@@ -73,17 +73,18 @@ export function pixelText(text: string, x: number, y: number, px: number, fill: 
 const ICONS: Record<string, { rows: string; fill: string }> = {
   discord: { rows: '..#####../.#######./#########/##..#..##/##..#..##/#########/.##...##.', fill: '#ffffff' },
   online: { rows: '.###./#####/#####/#####/.###.', fill: '#55ff55' },
+  pack: { rows: '.#####./#######/#.....#/#######/#.....#/#.....#/#######', fill: '#ffc93c' },
   suit: { rows: '##...##/###.###/#######/.#####./.#####./.#####./.#####.', fill: '#ffffff' },
 }
 
 const INK = '#000000'
-const FACE = '#4a1d5c'
-const FACE_LIT = '#7a3f94'
-const FACE_DARK = '#2c0f38'
+const FACE = '#661911'
+const FACE_LIT = '#8f2c20'
+const FACE_DARK = '#3d0e09'
 const WHITE = '#ffffff'
 const SHADOW = '#3f3f3f'
 
-/** A game-style button: black outline, purple face with a lit top and a dark bottom lip, an optional icon, and shadowed white text. */
+/** A game-style button: black outline, red face with a lit top and a dark bottom lip, an optional icon, and shadowed white text. */
 export function badgeSvg(text: string, icon?: keyof typeof ICONS): string {
   const px = 2
   const h = 40
@@ -105,34 +106,20 @@ ${ic ? `<g fill="${SHADOW}" transform="translate(${px} ${px})">${iconSvg}</g><g 
 </svg>`
 }
 
-/** The header: the wordmark with a block-letter extrusion like the game's title, over halftone dots on a violet glow, and a gold line under it. */
-export function bannerSvg(tagline: string): string {
-  const w = 1200
-  const h = 300
-  const px = 16
+/** The cover: a screenshot with the white wordmark across the bottom on a dark fade, extruded like the game's title. */
+export function coverSvg(image: string, w: number, h: number): string {
+  const px = Math.round(w / 80)
   const word = 'THEMATIC'
   const ww = textWidth(word) * px
   const wx = Math.round((w - ww) / 2)
-  const wy = 70
-  let dots = ''
-  for (let y = 6, row = 0; y < h; y += 12, row++) {
-    for (let x = row % 2 ? 6 : 0; x < w; x += 12) {
-      const d = Math.hypot((x - w / 2) / (w * 0.5), (y - h * 0.45) / (h * 0.7))
-      const r = d < 0.45 ? 2.6 : d < 0.75 ? 1.8 : d < 1 ? 1 : 0
-      if (r) dots += `<circle cx="${x}" cy="${y}" r="${r}"/>`
-    }
-  }
+  const wy = Math.round(h - 7 * px - h * 0.08)
   const rects = glyphRects(word, wx, wy, px)
   // the extrusion: the word stacked down-right, darkest at the back
   let depth = ''
-  for (let i = 7; i >= 1; i--) depth += `<g fill="${i === 7 ? INK : i > 3 ? '#1c0829' : '#2e0f44'}" transform="translate(${i * 2} ${i * 3})">${rects}</g>`
-  const tpx = 7
-  const tw = textWidth(tagline) * tpx
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" role="img" aria-label="Thematic. ${tagline}">
-<defs><radialGradient id="glow" cx="50%" cy="45%" r="70%"><stop offset="0" stop-color="#5a2d8a"/><stop offset="1" stop-color="#1f0a2e"/></radialGradient>
-<linearGradient id="face" x1="0" y1="${wy}" x2="0" y2="${wy + 7 * px}" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#ffffff"/><stop offset="0.56" stop-color="#e6d7f5"/><stop offset="1" stop-color="#c9b0e6"/></linearGradient></defs>
-<rect width="${w}" height="${h}" fill="url(#glow)"/><g fill="#a07ad6" fill-opacity="0.45" shape-rendering="auto">${dots}</g>
-${depth}<g fill="url(#face)">${rects}</g>
-${pixelText(tagline, Math.round((w - tw) / 2), wy + 7 * px + 40, tpx, '#ffaa00', '#3f2a00')}
+  for (let i = 6; i >= 1; i--) depth += `<g fill="${i > 3 ? INK : '#2b2b2b'}" transform="translate(${i * 2} ${i * 2})">${rects}</g>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="Thematic">
+<defs><linearGradient id="fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.75"/></linearGradient></defs>
+<image width="${w}" height="${h}" xlink:href="${image}" href="${image}"/><rect width="${w}" height="${h}" fill="url(#fade)"/>
+<g shape-rendering="crispEdges">${depth}<g fill="${WHITE}">${rects}</g></g>
 </svg>`
 }
