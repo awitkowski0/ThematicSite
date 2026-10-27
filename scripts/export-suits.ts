@@ -98,6 +98,20 @@ interface RawArmor {
   wip: boolean
   parent: string | null
   template: boolean
+  /** As written: undefined when the file doesn't mention a cape (it inherits the parent's). */
+  cape?: RawCape
+}
+
+// A cape as ArmorCodec reads it (Cape.CODEC), defaults filled in by the reader.
+interface RawCape {
+  partCount?: number
+  height?: number
+  width?: number
+  thickness?: number
+  texture?: string
+  shinyTexture?: string
+  simulation?: { type?: string }
+  remove?: boolean
 }
 
 // The stats the in-game "Stats Explained" page actually documents, in the order it lists
@@ -131,6 +145,7 @@ function loadRawArmors(): Map<string, RawArmor> {
         wip?: boolean
         parent?: string
         template?: boolean
+        cape?: RawCape
       }>(file)
 
       if (map.has(id)) {
@@ -147,6 +162,7 @@ function loadRawArmors(): Map<string, RawArmor> {
         wip: raw.wip ?? DEFAULT_WIP,
         parent: raw.parent ? stripNamespace(raw.parent) : null,
         template: raw.template ?? false,
+        cape: raw.cape,
       })
     }
   }
@@ -162,6 +178,8 @@ interface MergedArmor {
   recipe: string
   wip: boolean
   template: boolean
+  /** The cape object after the parent chain (whole object, child's wins), or undefined for none. */
+  cape?: RawCape
 }
 
 // Faithful port of ArmorCodec.mergeWithParent (ArmorCodec.java) for the fields the site needs.
@@ -186,6 +204,7 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
       recipe: self.recipe,
       wip: self.wip,
       template: self.template,
+      cape: self.cape,
     }
     cache.set(id, merged)
     return merged
@@ -218,6 +237,7 @@ function resolveMerged(id: string, raw: Map<string, RawArmor>, cache: Map<string
     recipe: self.recipe === DEFAULT_RECIPE ? parentMerged.recipe : self.recipe,
     wip: self.wip === DEFAULT_WIP ? parentMerged.wip : self.wip,
     template: self.template, // NOT inherited — ArmorCodec.mergeWithParent keeps the child's own value
+    cape: self.cape ?? parentMerged.cape, // ParentResolver's childOrParent: the whole object
   }
   cache.set(id, merged)
   return merged
@@ -386,6 +406,25 @@ function buildRecipeGraph(
 }
 
 const OUT_GEO_DIR = path.join(SITE_ROOT, 'public/geo')
+const OUT_CAPES_DIR = path.join(SITE_ROOT, 'public/capes')
+
+export interface TextureAnimation {
+  /** Frame indices into the vertical strip, in play order. */
+  frames: number[]
+  /** Game ticks (50 ms) per frame. */
+  frametime: number
+}
+
+// A texture's `.mcmeta` animation as the game plays it: square frames down the strip unless the mcmeta sizes them.
+function textureAnimation(png: string | undefined): TextureAnimation | undefined {
+  if (!png || !fs.existsSync(`${png}.mcmeta`)) return undefined
+  const anim = readJson<{ animation?: { frames?: (number | { index: number })[]; frametime?: number; height?: number } }>(`${png}.mcmeta`).animation
+  const size = pngSize(png)
+  if (!anim || !size) return undefined
+  const count = Math.floor(size[1] / (anim.height ?? size[0]))
+  const frames = anim.frames?.map((f) => (typeof f === 'number' ? f : f.index)) ?? [...Array(count).keys()]
+  return count > 1 && frames.length > 1 ? { frames, frametime: anim.frametime ?? 1 } : undefined
+}
 
 // PNG width/height from the IHDR chunk.
 function pngSize(file: string): [number, number] | undefined {
@@ -441,6 +480,9 @@ export function exportSuits() {
     geoPath?: string
     /** Bones the figure leaves out at rest, as the game hides them while no ability is on. */
     hiddenBones?: string[]
+    textureAnimation?: TextureAnimation
+    shinyTextureAnimation?: TextureAnimation
+    cape?: { texturePath: string; shinyTexturePath?: string; width: number; height: number; thickness: number }
   }[] = []
   const geoStats = { own: 0, parent: 0, skinStyle: 0 }
   // Bones an ability draws only while it runs (a toggle's or a timed press's "show" list), by ability id: hidden at rest.
@@ -474,6 +516,21 @@ export function exportSuits() {
     }
     geoStats.skinStyle++
     return geoOut('skin_style')
+  }
+  fs.rmSync(OUT_CAPES_DIR, { recursive: true, force: true })
+  // Mirrors Cape.textureFor: the cape's own texture, else textures/cape/<suit>_cape.png after the wearing suit's id.
+  const capeTexture = (loc: string | undefined, fallbackId: string): string | undefined => {
+    const rel = loc ? stripNamespace(loc).replace(/^textures\//, '') : `cape/${fallbackId}_cape.png`
+    const name = path.basename(rel)
+    return copyIfExists(findResource(`${ASSETS}/textures/${rel}`), path.join(OUT_CAPES_DIR, name)) ? `/capes/${name}` : undefined
+  }
+  // Mirrors Cape.render's plain hang; a glider-type cape or `remove` draws nothing.
+  const resolveCape = (id: string, cape: RawCape | undefined) => {
+    if (!cape || cape.remove || cape.simulation?.type === 'glider') return undefined
+    const texturePath = capeTexture(cape.texture, id)
+    if (!texturePath) return undefined
+    const shinyTexturePath = cape.shinyTexture ? capeTexture(cape.shinyTexture, id) : undefined
+    return { texturePath, ...(shinyTexturePath ? { shinyTexturePath } : {}), width: cape.width ?? 0.5, height: cape.height ?? 1.5, thickness: cape.thickness ?? 0.1 }
   }
   let missingGuideEntryCount = 0
 
@@ -519,6 +576,9 @@ export function exportSuits() {
       shinyTexturePath,
       geoPath,
       hiddenBones: restHidden(merged.abilities.map((a) => a.id)),
+      textureAnimation: textureAnimation(findResource(`${ASSETS}/textures/armor/${id}.png`)),
+      shinyTextureAnimation: textureAnimation(findResource(`${ASSETS}/textures/armor/${id}_shiny.png`)),
+      cape: resolveCape(id, merged.cape),
     })
   }
 

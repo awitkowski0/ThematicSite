@@ -2,6 +2,7 @@
 import type * as ThreeNS from 'three'
 
 import { bakeGeo } from './geo'
+import type { SuitCape } from './suits'
 
 export type Three = typeof ThreeNS
 
@@ -13,6 +14,7 @@ export interface FigureScene {
   scene: ThreeNS.Scene
   camera: ThreeNS.OrthographicCamera
   setTexture(t: ThreeNS.Texture): void
+  setCapeTexture(t: ThreeNS.Texture): void
   /** Frames the camera for a w x h (CSS px) target. */
   frame(width: number, height: number): void
   draw(renderer: ThreeNS.WebGLRenderer, width: number, height: number, yaw: number, pitch: number, zoom: number): void
@@ -42,7 +44,12 @@ export async function loadGeo(url: string) {
   return r.json()
 }
 
-export function buildFigureScene(THREE: Three, geoJson: any, textures: (ThreeNS.Texture | null)[], hiddenBones: string[] = []): FigureScene {
+export interface FigureCape {
+  spec: SuitCape
+  texture: ThreeNS.Texture
+}
+
+export function buildFigureScene(THREE: Three, geoJson: any, textures: (ThreeNS.Texture | null)[], hiddenBones: string[] = [], cape?: FigureCape): FigureScene {
   const baked = bakeGeo(geoJson, new Set(hiddenBones))
   const desc = geoJson['minecraft:geometry'][0].description as { texture_width?: number; texture_height?: number }
   for (const t of textures) if (t) cropToFirstFrame(THREE, t, (desc.texture_width ?? 64) / (desc.texture_height ?? 64))
@@ -56,6 +63,15 @@ export function buildFigureScene(THREE: Three, geoJson: any, textures: (ThreeNS.
   const inkMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, map: textures[0], alphaTest: 0.5, side: THREE.DoubleSide })
   const figure = new THREE.Mesh(geometry, material)
   const ink = new THREE.Mesh(geometry, inkMaterial)
+
+  // Cape.render draws two one-sided quads, so these cull; the cape is thin enough that double-sided ones would z-fight.
+  const capeGeometry = cape && capeGeo(THREE, cape.spec)
+  const capeMaterial = cape && new THREE.MeshBasicMaterial({ map: cape.texture, alphaTest: 0.5 })
+  const capeInkMaterial = cape && new THREE.MeshBasicMaterial({ color: 0x000000, map: cape.texture, alphaTest: 0.5 })
+  if (capeGeometry && capeMaterial && capeInkMaterial) {
+    figure.add(new THREE.Mesh(capeGeometry, capeMaterial))
+    ink.add(new THREE.Mesh(capeGeometry, capeInkMaterial))
+  }
 
   // Fit to the humanoid frame: stray cubes far from the body are drawn but don't stretch the framing.
   const fit = fitBounds(baked.positions)
@@ -85,6 +101,13 @@ export function buildFigureScene(THREE: Three, geoJson: any, textures: (ThreeNS.
       inkMaterial.map = t
       material.needsUpdate = true
       inkMaterial.needsUpdate = true
+    },
+    setCapeTexture(t) {
+      if (!capeMaterial || !capeInkMaterial) return
+      capeMaterial.map = t
+      capeInkMaterial.map = t
+      capeMaterial.needsUpdate = true
+      capeInkMaterial.needsUpdate = true
     },
     frame(width, height) {
       // Pad for the ink and the 3/4 turn; the limiting axis decides the scale.
@@ -117,11 +140,51 @@ export function buildFigureScene(THREE: Three, geoJson: any, textures: (ThreeNS.
       geometry.dispose()
       material.dispose()
       inkMaterial.dispose()
+      capeGeometry?.dispose()
+      capeMaterial?.dispose()
+      capeInkMaterial?.dispose()
     },
   }
 }
 
 // Animated-texture strips (a tall PNG of stacked frames) show their first frame, as the game does.
+/**
+ * The cape at rest, as Cape.renderDisplay hangs it with a still drape (MannequinCapeDrape with no wind): one flat
+ * sheet from the shoulders, tipped back {@code 6 + height} degrees. Built in the game's space (GeckoLib's, x mirrored
+ * from the file) and stored mirrored back, like the baked geo. The outer face takes the texture's left half, the
+ * inner face its right half, v running shoulders to hem.
+ */
+function capeGeo(THREE: Three, { width: w, height: h, thickness: t }: SuitCape) {
+  const b = ((6 + h) * Math.PI) / 180
+  const [cb, sb] = [Math.cos(b), Math.sin(b)]
+  // (x, y down the cape, z off the inner face) -> Bedrock-space position: T(0, 24.125/16, 2/16) * Rx(180) * Ry(180) * Rx(b) * Ry(180)
+  const at = (x: number, y: number, z: number) => [-x, 24.125 / 16 - y * cb - z * sb, 2 / 16 + y * sb - z * cb]
+  const pos: number[] = []
+  const uv: number[] = []
+  // Corners TL, TR, BR, BL as seen from outside, each [x, y, u, v] (v down); two triangles facing outward.
+  const quad = (z: number, corners: number[][]) => {
+    for (const [x, y, u, v] of corners) {
+      pos.push(...at(x, y, z))
+      uv.push(u, 1 - v)
+    }
+  }
+  // Outer face, seen from behind: game x = w at u 0.5, x = -w at u 0.
+  quad(-t, [[w, 0, 0.5, 0], [-w, 0, 0, 0], [-w, h, 0, 1], [w, h, 0.5, 1]])
+  // Inner face, seen from the body: game x = w at u 0.5, x = -w at u 1.
+  quad(0, [[-w, 0, 1, 0], [w, 0, 0.5, 0], [w, h, 0.5, 1], [-w, h, 1, 1]])
+  const g = new THREE.BufferGeometry()
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2))
+  g.setIndex([0, 3, 2, 0, 2, 1, 4, 7, 6, 4, 6, 5])
+  return g
+}
+
+/** Shows frame {@code frame} of a texture {@link cropToFirstFrame} found to be a strip; a no-op on a single image. */
+export function showFrame(t: ThreeNS.Texture, frame: number) {
+  const count = Math.round(1 / t.repeat.y)
+  if (count > 1) t.offset.y = 1 - ((frame % count) + 1) * t.repeat.y
+}
+
 function cropToFirstFrame(THREE: Three, t: ThreeNS.Texture, descAspect: number) {
   const img = t.image as { width: number; height: number }
   const frameH = img.width / descAspect
@@ -150,7 +213,7 @@ function fitBounds(p: Float32Array): { min: [number, number, number]; max: [numb
 
 let shared: Promise<{ THREE: Three; renderer: ThreeNS.WebGLRenderer }> | undefined
 let queue: Promise<unknown> = Promise.resolve()
-const STILL_CACHE = 'thematic-stills-v1'
+const STILL_CACHE = 'thematic-stills-v2'
 
 function sharedRenderer() {
   shared ??= import('three').then((THREE) => {
@@ -186,15 +249,19 @@ function remember(key: string, canvas: HTMLCanvasElement) {
  * One figure at rest pose as a bitmap. A copy kept from an earlier visit comes back at once; otherwise the files load in
  * parallel with every other figure's and only the draw waits its turn on the single shared renderer.
  */
-export async function renderStill(geoPath: string, texturePath: string, width: number, height: number, hiddenBones: string[] = []): Promise<ImageBitmap> {
+export async function renderStill(geoPath: string, texturePath: string, width: number, height: number, hiddenBones: string[] = [], cape?: { spec: SuitCape; texturePath: string }): Promise<ImageBitmap> {
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
-  const key = `/__still/${encodeURIComponent(`${geoPath}|${texturePath}|${hiddenBones.join(',')}|${width}x${height}@${dpr}`)}`
+  const key = `/__still/${encodeURIComponent(`${geoPath}|${texturePath}|${hiddenBones.join(',')}|${cape?.texturePath ?? ''}|${width}x${height}@${dpr}`)}`
   const hit = typeof caches !== 'undefined' ? await cached(key) : undefined
   if (hit) return hit
   const { THREE, renderer } = await sharedRenderer()
-  const [geoJson, tex] = await Promise.all([loadGeo(geoPath), loadTexture(THREE, texturePath)])
+  const [geoJson, tex, capeTex] = await Promise.all([
+    loadGeo(geoPath),
+    loadTexture(THREE, texturePath),
+    cape ? loadTexture(THREE, cape.texturePath).catch(() => null) : Promise.resolve(null),
+  ])
   const job = queue.then(async () => {
-    const fig = buildFigureScene(THREE, geoJson, [tex], hiddenBones)
+    const fig = buildFigureScene(THREE, geoJson, [tex], hiddenBones, cape && capeTex ? { spec: cape.spec, texture: capeTex } : undefined)
     try {
       renderer.setPixelRatio(dpr)
       renderer.setSize(width, height, false)
@@ -210,6 +277,7 @@ export async function renderStill(geoPath: string, texturePath: string, width: n
     } finally {
       fig.dispose()
       tex.dispose()
+      capeTex?.dispose()
     }
   })
   queue = job.catch(() => undefined)

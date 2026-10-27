@@ -21,7 +21,7 @@ function SuitCard({ suit, versions }: { suit: Suit; versions?: number }) {
       <Link to="/suits/$id" params={{ id: suit.id }} className="group block">
         {suit.geoPath && suit.texturePath ? (
           <div className="tb-panel">
-            <SuitStill geoPath={suit.geoPath} texturePath={suit.texturePath} hiddenBones={suit.hiddenBones} name={suit.name} />
+            <SuitStill geoPath={suit.geoPath} texturePath={suit.texturePath} hiddenBones={suit.hiddenBones} cape={suit.cape} name={suit.name} />
           </div>
         ) : (
           <div className="tb-inset aspect-[3/4]" />

@@ -83,7 +83,7 @@ function FigureCard({ page, shiny }: { page: BookPage; shiny?: boolean }) {
     <figure>
       {suit?.geoPath && texture ? (
         <div className="tb-panel">
-          <SuitStill geoPath={suit.geoPath} texturePath={texture} hiddenBones={suit.hiddenBones} name={`${page.suit.name}${shiny ? ' (shiny)' : ''}`} />
+          <SuitStill geoPath={suit.geoPath} texturePath={texture} hiddenBones={suit.hiddenBones} cape={suit.cape} shiny={shiny} name={`${page.suit.name}${shiny ? ' (shiny)' : ''}`} />
         </div>
       ) : null}
       <figcaption className="mt-2 text-sm">

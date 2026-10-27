@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 
-import { REST_PITCH, REST_YAW, buildFigureScene, loadGeo, loadTexture } from '../lib/figureScene'
+import { REST_PITCH, REST_YAW, buildFigureScene, loadGeo, loadTexture, showFrame } from '../lib/figureScene'
+import type { SuitCape, TextureAnimation } from '../lib/suits'
 
 interface SuitFigureProps {
   geoPath: string
   texturePath: string
   shinyTexturePath?: string
   hiddenBones?: string[]
+  cape?: SuitCape
+  textureAnimation?: TextureAnimation
+  shinyTextureAnimation?: TextureAnimation
   name: string
   className?: string
   /** Called once if the geo or texture can't be loaded or parsed; the component then renders nothing. */
@@ -22,7 +26,7 @@ interface Stage {
   setShiny(on: boolean): void
 }
 
-export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hiddenBones, name, className = 'aspect-[3/4] w-full', onError }: SuitFigureProps) {
+export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hiddenBones, cape, textureAnimation, shinyTextureAnimation, name, className = 'aspect-[3/4] w-full', onError }: SuitFigureProps) {
   const hostRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Stage | null>(null)
   const onErrorRef = useRef(onError)
@@ -40,17 +44,20 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
 
     ;(async () => {
       const THREE = await import('three')
-      const [geoJson, tex, shinyTex] = await Promise.all([
+      const optional = (path: string | undefined) => (path ? loadTexture(THREE, path).catch(() => null) : Promise.resolve(null))
+      const [geoJson, tex, shinyTex, capeTex, capeShinyTex] = await Promise.all([
         loadGeo(geoPath),
         loadTexture(THREE, texturePath),
-        shinyTexturePath ? loadTexture(THREE, shinyTexturePath).catch(() => null) : Promise.resolve(null),
+        optional(shinyTexturePath),
+        optional(cape?.texturePath),
+        optional(cape?.shinyTexturePath),
       ])
+      const textures = [tex, shinyTex, capeTex, capeShinyTex]
       if (disposed) {
-        tex.dispose()
-        shinyTex?.dispose()
+        for (const t of textures) t?.dispose()
         return
       }
-      const fig = buildFigureScene(THREE, geoJson, [tex, shinyTex], hiddenBones)
+      const fig = buildFigureScene(THREE, geoJson, [tex, shinyTex], hiddenBones, cape && capeTex ? { spec: cape, texture: capeTex } : undefined)
 
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: true })
       renderer.setClearColor(0x000000, 0)
@@ -68,6 +75,7 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
       let width = 1
       let height = 1
       let frame = 0
+      let showingShiny = false
 
       const draw = () => {
         frame = 0
@@ -89,6 +97,19 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
       const observer = new ResizeObserver(resize)
       observer.observe(host)
       resize()
+
+      // Steps a `.mcmeta` strip the way the game does, one frame every `frametime` ticks; held on its first frame for reduced motion.
+      let tick = 0
+      const animate = () => {
+        const anim = showingShiny && shinyTex ? shinyTextureAnimation : textureAnimation
+        const t = showingShiny && shinyTex ? shinyTex : tex
+        if (!anim) return
+        showFrame(t, anim.frames[Math.floor(tick++ / anim.frametime) % anim.frames.length])
+        requestRender()
+      }
+      animate()
+      const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      const ticker = (textureAnimation || shinyTextureAnimation) && !still ? setInterval(animate, 50) : undefined
 
       let dragging = false
       let lastX = 0
@@ -136,13 +157,19 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
 
       stageRef.current = {
         setShiny(on) {
+          showingShiny = on
           fig.setTexture(on && shinyTex ? shinyTex : tex)
+          const capeT = on && capeShinyTex ? capeShinyTex : capeTex
+          if (capeT) fig.setCapeTexture(capeT)
+          tick = 0
+          animate()
           requestRender()
         },
       }
 
       teardown = () => {
         cancelAnimationFrame(frame)
+        clearInterval(ticker)
         observer.disconnect()
         canvas.removeEventListener('pointerdown', onDown)
         canvas.removeEventListener('pointermove', onMove)
@@ -153,8 +180,7 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
         canvas.removeEventListener('contextmenu', reset)
         canvas.remove()
         fig.dispose()
-        tex.dispose()
-        shinyTex?.dispose()
+        for (const t of textures) t?.dispose()
         renderer.dispose()
         renderer.forceContextLoss()
       }
@@ -170,7 +196,7 @@ export default function SuitFigure({ geoPath, texturePath, shinyTexturePath, hid
       teardown?.()
       stageRef.current = null
     }
-  }, [geoPath, texturePath, shinyTexturePath, hiddenBones, name])
+  }, [geoPath, texturePath, shinyTexturePath, hiddenBones, cape, textureAnimation, shinyTextureAnimation, name])
 
   useEffect(() => {
     stageRef.current?.setShiny(shiny)

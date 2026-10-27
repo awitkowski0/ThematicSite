@@ -56,7 +56,7 @@ export function AbilityFacts({ id, name, hasNumbers }: { id: string; name: strin
                 <Link to="/suits/$id" params={{ id: s.id }} className="group block">
                   {s.geoPath && s.texturePath ? (
                     <div className="tb-panel">
-                      <SuitStill geoPath={s.geoPath} texturePath={s.texturePath} hiddenBones={s.hiddenBones} name={s.name} />
+                      <SuitStill geoPath={s.geoPath} texturePath={s.texturePath} hiddenBones={s.hiddenBones} cape={s.cape} name={s.name} />
                     </div>
                   ) : (
                     <div className="tb-inset aspect-[3/4]" />

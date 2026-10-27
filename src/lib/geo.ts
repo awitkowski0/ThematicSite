@@ -79,8 +79,9 @@ const FACE_CORNERS: Record<FaceName, [number, number, number][]> = {
 }
 const FACES = Object.keys(FACE_CORNERS) as FaceName[]
 
-// Rect [u, v, w, h] in pixels for each face of a box-UV cube.
-function boxUv(u: number, v: number, [w, h, d]: V3, mirror: boolean): Record<FaceName, [number, number, number, number]> {
+// Rect [u, v, w, h] in pixels for each face of a box-UV cube. GeckoLib floors the size first, so fractional cubes keep whole-pixel rects.
+function boxUv(u: number, v: number, size: V3, mirror: boolean): Record<FaceName, [number, number, number, number]> {
+  const [w, h, d] = size.map(Math.floor)
   const r: Record<FaceName, [number, number, number, number]> = {
     east: [u, v + d, d, h],
     north: [u + d, v + d, w, h],

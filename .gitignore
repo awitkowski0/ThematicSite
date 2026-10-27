@@ -10,6 +10,7 @@ src/data/*.generated.json
 src/data/book/
 public/suits/
 public/geo/
+public/capes/
 public/book/
 
 # build-time clone of the private Thematic repo (see scripts/fetch-source.mjs). Only exists

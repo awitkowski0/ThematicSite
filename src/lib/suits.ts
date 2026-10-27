@@ -64,6 +64,26 @@ export interface Suit {
   geoPath?: string
   /** Bones the figure leaves out at rest. */
   hiddenBones?: string[]
+  /** The texture's `.mcmeta` animation, when it is a strip of frames. */
+  textureAnimation?: TextureAnimation
+  shinyTextureAnimation?: TextureAnimation
+  cape?: SuitCape
+}
+
+export interface TextureAnimation {
+  /** Frame indices into the vertical strip, in play order. */
+  frames: number[]
+  /** Game ticks (50 ms) per frame. */
+  frametime: number
+}
+
+/** A cape as the suit's file defines it (Cape.CODEC); sizes in blocks. */
+export interface SuitCape {
+  texturePath: string
+  shinyTexturePath?: string
+  width: number
+  height: number
+  thickness: number
 }
 
 export interface CollectionMeta {

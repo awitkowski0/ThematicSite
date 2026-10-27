@@ -27,6 +27,7 @@ const SPARSE_PATHS = [
   'src/common/resources/assets/thematic/guide',
   'src/common/resources/assets/thematic/lang',
   'src/common/resources/assets/thematic/textures/armor',
+  'src/common/resources/assets/thematic/textures/cape',
   'src/common/resources/assets/thematic/textures/item',
   'src/common/resources/assets/thematic/textures/block',
   'src/packs',

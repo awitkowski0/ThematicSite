@@ -77,7 +77,7 @@ function Figure({ suit }: { suit: Suit }) {
   if (!suit.geoPath || !suit.texturePath || failed) return null
   return (
     <div className="tb-panel">
-      <SuitFigure geoPath={suit.geoPath} texturePath={suit.texturePath} shinyTexturePath={suit.shinyTexturePath} hiddenBones={suit.hiddenBones} name={suit.name} onError={() => setFailed(true)} />
+      <SuitFigure geoPath={suit.geoPath} texturePath={suit.texturePath} shinyTexturePath={suit.shinyTexturePath} hiddenBones={suit.hiddenBones} cape={suit.cape} textureAnimation={suit.textureAnimation} shinyTextureAnimation={suit.shinyTextureAnimation} name={suit.name} onError={() => setFailed(true)} />
     </div>
   )
 }
@@ -201,7 +201,7 @@ function Versions({ suit }: { suit: Suit }) {
             <Link to="/suits/$id" params={{ id: v.id }} className="group block">
               {v.geoPath && v.texturePath ? (
                 <div className="tb-panel">
-                  <SuitStill geoPath={v.geoPath} texturePath={v.texturePath} hiddenBones={v.hiddenBones} name={v.name} />
+                  <SuitStill geoPath={v.geoPath} texturePath={v.texturePath} hiddenBones={v.hiddenBones} cape={v.cape} name={v.name} />
                 </div>
               ) : (
                 <div className="tb-inset aspect-[3/4]" />

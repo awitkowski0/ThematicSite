@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { renderStill } from '../lib/figureScene'
+import type { SuitCape } from '../lib/suits'
 
 const cache = new Map<string, Promise<ImageBitmap>>()
 
 /** A suit's inked figure at rest pose, drawn when it scrolls near view; for pages that show many. */
-export function SuitStill({ geoPath, texturePath, name, hiddenBones = [], className = 'aspect-[3/4] w-full' }: { geoPath: string; texturePath: string; name: string; hiddenBones?: string[]; className?: string }) {
+export function SuitStill({ geoPath, texturePath, name, hiddenBones = [], cape, shiny = false, className = 'aspect-[3/4] w-full' }: { geoPath: string; texturePath: string; name: string; hiddenBones?: string[]; cape?: SuitCape; shiny?: boolean; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [failed, setFailed] = useState(false)
   const hidden = hiddenBones.join(',')
+  const capeTexture = cape && ((shiny && cape.shinyTexturePath) || cape.texturePath)
 
   useEffect(() => {
     const el = ref.current
@@ -21,9 +23,9 @@ export function SuitStill({ geoPath, texturePath, name, hiddenBones = [], classN
         io.disconnect()
         const width = Math.max(1, Math.round(el.getBoundingClientRect().width))
         const height = Math.max(1, Math.round(el.getBoundingClientRect().height))
-        const key = `${geoPath}|${texturePath}|${hidden}|${width}x${height}`
+        const key = `${geoPath}|${texturePath}|${hidden}|${capeTexture ?? ''}|${width}x${height}`
         let job = cache.get(key)
-        if (!job) cache.set(key, (job = renderStill(geoPath, texturePath, width, height, hidden ? hidden.split(',') : [])))
+        if (!job) cache.set(key, (job = renderStill(geoPath, texturePath, width, height, hidden ? hidden.split(',') : [], cape && capeTexture ? { spec: cape, texturePath: capeTexture } : undefined)))
         job
           .then((bitmap) => {
             const canvas = canvasRef.current
@@ -41,7 +43,7 @@ export function SuitStill({ geoPath, texturePath, name, hiddenBones = [], classN
       live = false
       io.disconnect()
     }
-  }, [geoPath, texturePath, hidden])
+  }, [geoPath, texturePath, hidden, cape, capeTexture])
 
   if (failed) return null
   return (
